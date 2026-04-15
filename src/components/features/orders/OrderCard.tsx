@@ -1,0 +1,105 @@
+import { CalendarDays, Eye, ReceiptText, TicketPercent, User2, Wallet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CancelOrderButton } from './CancelOrderButton';
+import { OrderStatusBadge } from './OrderStatusBadge';
+import type { OrderListItem } from './types';
+import { formatOrderStatus } from './types';
+
+interface OrderCardProps {
+  order: OrderListItem;
+  onViewDetails: (orderNumber: string) => void;
+}
+
+export function OrderCard({ order, onViewDetails }: OrderCardProps) {
+  return (
+    <article className="rounded-xl border border-border bg-card/60 p-4 transition-all hover:border-primary/30 hover:bg-card">
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold">{order.order_number}</p>
+            <p className="text-xs text-muted-foreground">ID: {order.id}</p>
+          </div>
+          <OrderStatusBadge status={order.status} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+            <p className="mb-1 text-xs text-muted-foreground">Order Date</p>
+            <div className="flex items-center gap-1.5">
+              <CalendarDays className="size-3.5 text-primary" />
+              <span>{new Date(order.created_at).toLocaleString()}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+            <p className="mb-1 text-xs text-muted-foreground">User ID</p>
+            <div className="flex items-center gap-1.5 break-all">
+              <User2 className="size-3.5 text-primary" />
+              <span>{order.user}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+            <p className="mb-1 text-xs text-muted-foreground">Items Count</p>
+            <div className="flex items-center gap-1.5">
+              <ReceiptText className="size-3.5 text-primary" />
+              <span>{order.items_count}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+            <p className="mb-1 text-xs text-muted-foreground">Subtotal</p>
+            <div className="flex items-center gap-1.5">
+              <Wallet className="size-3.5 text-primary" />
+              <span>{order.subtotal}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+            <p className="mb-1 text-xs text-muted-foreground">Tax</p>
+            <div className="flex items-center gap-1.5">
+              <TicketPercent className="size-3.5 text-primary" />
+              <span>{order.tax}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+            <p className="mb-1 text-xs text-muted-foreground">Discount</p>
+            <span>{order.discount_total}</span>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3 sm:col-span-2 xl:col-span-1">
+            <p className="mb-1 text-xs text-muted-foreground">Coupon Code</p>
+            <span>{order.coupon_code ?? 'No coupon'}</span>
+          </div>
+          <div className="rounded-lg border border-border/60 bg-background/50 p-3 sm:col-span-2">
+            <p className="mb-1 text-xs text-muted-foreground">Payment Details</p>
+            {order.payment_details ? (
+              <div className="space-y-1 text-xs sm:text-sm">
+                <p>Gateway ID: {order.payment_details.gateway_id}</p>
+                <p>Gateway Name: {order.payment_details.gateway_name}</p>
+                <p>Status: {order.payment_details.status}</p>
+                <p>
+                  Amount: {order.payment_details.amount} {order.payment_details.currency}
+                </p>
+              </div>
+            ) : (
+              <p>No payment details available</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold">
+            Total Price: <span className="text-primary">{order.total_price}</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <CancelOrderButton orderNumber={order.order_number} status={order.status} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={() => onViewDetails(order.order_number)}>
+              <Eye className="size-3.5" />
+              View Details ({formatOrderStatus(order.status)})
+            </Button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}

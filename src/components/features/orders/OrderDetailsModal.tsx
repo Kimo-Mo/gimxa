@@ -1,0 +1,130 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { orderService } from '@/services/order.service';
+import { OrderStatusBadge } from './OrderStatusBadge';
+import { getErrorMessage, type OrderDetails } from './types';
+
+interface OrderDetailsModalProps {
+  orderNumber: string | null;
+  onClose: () => void;
+}
+
+export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalProps) {
+  const detailsQuery = useQuery({
+    queryKey: ['orders', 'detail', orderNumber],
+    queryFn: async (): Promise<OrderDetails> => orderService.getOrderDetail(orderNumber ?? ''),
+    enabled: Boolean(orderNumber),
+  });
+
+  const details = detailsQuery.data;
+
+  return (
+    <Dialog open={Boolean(orderNumber)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Order Details</DialogTitle>
+        </DialogHeader>
+
+        {detailsQuery.isLoading && <p className="text-sm text-muted-foreground">Loading details...</p>}
+        {detailsQuery.isError && (
+          <p className="text-sm text-destructive">
+            {getErrorMessage(detailsQuery.error, 'Failed to load order details')}
+          </p>
+        )}
+        {!detailsQuery.isLoading && !detailsQuery.isError && !details && (
+          <p className="text-sm text-muted-foreground">No order details found.</p>
+        )}
+
+        {details && (
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold">{details.order_number}</p>
+                <p className="text-xs text-muted-foreground">ID: {details.id}</p>
+                <p className="text-xs text-muted-foreground">
+                  Created: {new Date(details.created_at).toLocaleString()}
+                </p>
+              </div>
+              <OrderStatusBadge status={details.status} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+                <p className="mb-1 text-xs text-muted-foreground">Subtotal</p>
+                <p>{details.subtotal}</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+                <p className="mb-1 text-xs text-muted-foreground">Tax</p>
+                <p>{details.tax}</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+                <p className="mb-1 text-xs text-muted-foreground">Discount Total</p>
+                <p>{details.discount_total}</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3">
+                <p className="mb-1 text-xs text-muted-foreground">Coupon Code</p>
+                <p>{details.coupon_code ?? 'No coupon'}</p>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3 sm:col-span-2">
+                <p className="mb-1 text-xs text-muted-foreground">Total Price</p>
+                <p className="font-semibold text-primary">{details.total_price}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card/60 p-4">
+              <p className="mb-2 text-sm font-semibold">Payment Details</p>
+              {details.payment_details ? (
+                <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                  <p>Gateway ID: {details.payment_details.gateway_id}</p>
+                  <p>Gateway Name: {details.payment_details.gateway_name}</p>
+                  <p>Status: {details.payment_details.status}</p>
+                  <p>
+                    Amount: {details.payment_details.amount} {details.payment_details.currency}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No payment details available.</p>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-semibold">Order Items ({details.items.length})</p>
+              {details.items.map((item) => (
+                <div key={item.id} className="rounded-lg border border-border bg-card/60 p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium">{item.product_name}</p>
+                    <p className="text-xs text-muted-foreground">Item ID: {item.id}</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                    <p>Product Slug: {item.product_slug}</p>
+                    <p>Quantity: {item.quantity}</p>
+                    <p>Price: {item.price}</p>
+                    <p>Is Top-up: {item.is_topup ? 'Yes' : 'No'}</p>
+                    <p>Top-up Package: {item.topup_package ?? 'N/A'}</p>
+                    <p>Created At: {new Date(item.created_at).toLocaleString()}</p>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xs text-muted-foreground">Top-up Data</p>
+                    {item.topup_data ? (
+                      <div className="mt-1 space-y-1 text-xs sm:text-sm">
+                        {Object.entries(item.topup_data).map(([key, value]) => (
+                          <p key={key}>
+                            {key}: {value}
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No top-up data</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
