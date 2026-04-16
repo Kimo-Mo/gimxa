@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { catalogService } from '@/services/catalog.service';
-import type { Product, PaginatedResponse, ProductCategory } from '@/types';
-import { toast } from 'sonner';
-import { authService } from '@/services/auth.service';
+import { useProductsQuery } from '@/hooks/admin/useProductsQuery';
+import { useDeleteProductMutation } from '@/hooks/admin/useDeleteProductMutation';
+import { useCategoriesQuery } from '@/hooks/admin/useCategoriesQuery';
 
 // Extracted Components
 import { ProductListHeader } from '@/components/admin/products/ProductListHeader';
@@ -14,20 +13,12 @@ import { ProductTable } from '@/components/admin/products/ProductTable';
 import { ProductPagination } from '@/components/admin/products/ProductPagination';
 import { DeleteProductDialog } from '@/components/admin/products/DeleteProductDialog';
 
-const PAGE_SIZE = 10;
-
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [pagination, setPagination] = useState({ count: 0, total_pages: 1, current_page: 1 });
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryId, setCategoryId] = useState('all');
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -36,67 +27,24 @@ export default function AdminProductsPage() {
   }, [search]);
 
   useEffect(() => {
-    setPage(1);
+    const timeoutId = setTimeout(() => {
+      setPage(1);
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [debouncedSearch, categoryId]);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const filterParts: string[] = [];
-      if (categoryId !== 'all') filterParts.push(`category=${categoryId}`);
-      const data = (await catalogService.adminProductsList({
-        page,
-        page_size: PAGE_SIZE,
-        ...(debouncedSearch ? { search: debouncedSearch } : {}),
-        ...(filterParts.length > 0 ? { filter: filterParts.join(',') } : {}),
-      })) as PaginatedResponse<Product>;
-      // Filter topup products on the client side
-      const results = (data?.results ?? []).filter((p) => p.product_type !== 'topup');
-      setProducts(results);
-      setPagination({
-        count: results.length,
-        total_pages: data?.total_pages ?? 1,
-        current_page: data?.current_page ?? 1,
-      });
-    } catch {
-      setError('Failed to load products. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedSearch, categoryId]);
+  const productsQuery = useProductsQuery({ page, search: debouncedSearch, categoryId });
+  const deleteMutation = useDeleteProductMutation();
+  const categoriesQuery = useCategoriesQuery();
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const categories = (categoriesQuery.data ?? []).filter(c => !c.name.startsWith('Topup'));
+  const products = productsQuery.data?.results ?? [];
+  const loading = productsQuery.isPending;
 
-  useEffect(() => {
-    catalogService
-      .adminCategoriesList()
-      .then((data) => {
-        const productsCategories = (Array.isArray(data) ? data : (data?.results ?? [])).filter(
-          (category: ProductCategory) => !category.name.startsWith('Topup')
-        );
-        setCategories(productsCategories);
-      })
-      .catch(() => []);
-  }, []);
-
-  const handleDelete = async () => {
-    if (!deleteSlug) return;
-    setDeleting(true);
-    try {
-      await catalogService.adminDeleteProduct(deleteSlug);
-      toast.success('Product deleted successfully.');
-      await authService.clearCache();
-      fetchProducts();
-    } catch {
-      toast.error('Failed to delete product.');
-    } finally {
-      setDeleting(false);
-      setDeleteSlug(null);
-    }
-  };
+  const count = productsQuery.data?.count ?? 0;
+  const current_page = productsQuery.data?.current_page ?? 1;
+  const total_pages = productsQuery.data?.total_pages ?? 1;
 
   return (
     <div className="space-y-8">
@@ -109,18 +57,18 @@ export default function AdminProductsPage() {
           categoryId={categoryId}
           setCategoryId={setCategoryId}
           categories={categories}
-          productCount={pagination.count}
+          productCount={count}
         />
-        {error ? (
-          <div className="text-center py-12 text-destructive text-sm">{error}</div>
+        {productsQuery.isError ? (
+          <div className="text-center py-12 text-destructive text-sm">Failed to load products. Please try again.</div>
         ) : (
           <CardContent>
             <ProductTable products={products} loading={loading} setDeleteSlug={setDeleteSlug} />
 
             <ProductPagination
-              current_page={pagination.current_page}
-              total_pages={pagination.total_pages}
-              count={pagination.count}
+              current_page={current_page}
+              total_pages={total_pages}
+              count={count}
               loading={loading}
               setPage={setPage}
             />
@@ -131,8 +79,11 @@ export default function AdminProductsPage() {
       <DeleteProductDialog
         deleteSlug={deleteSlug}
         setDeleteSlug={setDeleteSlug}
-        deleting={deleting}
-        handleDelete={handleDelete}
+        deleting={deleteMutation.isPending}
+        handleDelete={() => {
+          if (deleteSlug) deleteMutation.mutate(deleteSlug);
+          setDeleteSlug(null);
+        }}
       />
     </div>
   );

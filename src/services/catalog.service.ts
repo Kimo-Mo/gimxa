@@ -105,4 +105,7 @@ export const catalogService = {
     const { data } = await api.post('/catalog/admin/tags/', payload);
     return data;
   },
+  adminDeleteTag: async (slug: string): Promise<void> => {
+    await api.delete(`/catalog/admin/tags/${slug}/`);
+  },
 };

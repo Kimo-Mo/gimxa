@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { dashboardService } from '@/services/dashboard.service';
-import { catalogService } from '@/services/catalog.service';
-import type { ProductCategory, ProductTag } from '@/types/catalog';
 import { toast } from 'sonner';
-import { authService } from '@/services/auth.service';
 
 import type { StockMode, AttributeRow, ImageState } from '@/components/admin/products/types';
 import { ProductBasicInfo } from '@/components/admin/products/ProductBasicInfo';
@@ -17,6 +13,12 @@ import { ProductImages } from '@/components/admin/products/ProductImages';
 import { ProductTags } from '@/components/admin/products/ProductTags';
 import { ProductAttributes } from '@/components/admin/products/ProductAttributes';
 import { ProductCodes } from '@/components/admin/products/ProductCodes';
+
+import { useCategoriesQuery } from '@/hooks/admin/useCategoriesQuery';
+import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
+import { useCreateProductMutation } from '@/hooks/admin/useCreateProductMutation';
+import { useCreateTagMutation, useDeleteTagMutation } from '@/hooks/admin/useTagMutations';
+import type { ProductTag } from '@/types/catalog';
 
 export default function AdminProductCreatePage() {
   const router = useRouter();
@@ -45,15 +47,11 @@ export default function AdminProductCreatePage() {
   const [codesText, setCodesText] = useState('');
 
   // Categories & Tags
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
-  const [tags, setTags] = useState<ProductTag[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
-  const [addingTag, setAddingTag] = useState(false);
 
   // Submit state
-  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const clearError = (field: string) =>
@@ -63,19 +61,26 @@ export default function AdminProductCreatePage() {
       return next;
     });
 
+  const categoriesQuery = useCategoriesQuery();
+  const tagsQuery = useTagsQuery();
+  const createMutation = useCreateProductMutation();
+  const createTagMutation = useCreateTagMutation();
+  const deleteTagMutation = useDeleteTagMutation();
+
+  const categories = categoriesQuery.data?.filter(c => !c.name.startsWith('Topup')) ?? [];
+  const tags = tagsQuery.data ?? [];
+
+  // Unsaved changes warning
   useEffect(() => {
-    Promise.all([
-      catalogService.adminCategoriesList().catch(() => []),
-      catalogService.adminTagsList().catch(() => []),
-    ]).then(([catData, tagData]) => {
-      const catList: ProductCategory[] = (
-        Array.isArray(catData) ? catData : (catData?.results ?? [])
-      ).filter((category: ProductCategory) => !category.name.startsWith('Topup'));
-      const tagList: ProductTag[] = Array.isArray(tagData) ? tagData : (tagData?.results ?? []);
-      setCategories(catList);
-      setTags(tagList);
-    });
-  }, []);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (name || price || shortDescription || images.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [name, price, shortDescription, images]);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -148,7 +153,7 @@ export default function AdminProductCreatePage() {
     setSelectedTags((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
   };
 
-  const handleAddNewTag = async () => {
+  const handleAddNewTag = () => {
     const trimmed = newTagInput.trim();
     if (!trimmed) return;
     const existing = tags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
@@ -157,27 +162,22 @@ export default function AdminProductCreatePage() {
       setNewTagInput('');
       return;
     }
-    setAddingTag(true);
-    try {
-      const created = await catalogService.adminAddTag({ name: trimmed });
-      const newTag: ProductTag = created;
-      setTags((prev) => [...prev, newTag]);
-      setSelectedTags((prev) => [...prev, newTag.id]);
-      setNewTagInput('');
-    } catch {
-      toast.error('Failed to add tag.');
-    } finally {
-      setAddingTag(false);
-    }
+    createTagMutation.mutate(trimmed, {
+      onSuccess: (newTag: ProductTag) => {
+        setSelectedTags((prev) => [...prev, newTag.id]);
+        setNewTagInput('');
+      }
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Product name is required.';
-    if (!price || parseFloat(price) <= 0)
-      newErrors.price = 'Price is required and must be greater than 0.';
+    // Update US1 regex price validation
+    if (!price || parseFloat(price) <= 0 || !/^\d+(\.\d{1,2})?$/.test(price))
+      newErrors.price = 'Price is required, must be > 0, and max 2 decimal places.';
     if (!selectedCategory) newErrors.category = 'Category is required.';
     if (!stockMode) newErrors.stockMode = 'Stock mode is required.';
     if (stockMode === 'manual' && !manualFulfillmentTime)
@@ -195,74 +195,53 @@ export default function AdminProductCreatePage() {
     }
     setErrors({});
 
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('product_type', 'digital');
-      formData.append('stock_mode', stockMode);
-      formData.append('region', region);
-      if (price) formData.append('price', price);
-      if (stockMode === 'manual' && manualFulfillmentTime)
-        formData.append('manual_fulfillment_time', manualFulfillmentTime);
-      if (shortDescription) formData.append('short_description', shortDescription);
-      if (description) formData.append('description', description);
-      formData.append('is_active', isActive ? 'true' : 'false');
-      formData.append('is_available', isAvailable ? 'true' : 'false');
-      formData.append('is_popular', isPopular ? 'true' : 'false');
-      formData.append('is_featured', isFeatured ? 'true' : 'false');
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('product_type', 'digital');
+    formData.append('stock_mode', stockMode);
+    formData.append('region', region);
+    if (price) formData.append('price', price);
+    if (stockMode === 'manual' && manualFulfillmentTime)
+      formData.append('manual_fulfillment_time', manualFulfillmentTime);
+    if (shortDescription) formData.append('short_description', shortDescription);
+    if (description) formData.append('description', description);
+    formData.append('is_active', isActive ? 'true' : 'false');
+    formData.append('is_available', isAvailable ? 'true' : 'false');
+    formData.append('is_popular', isPopular ? 'true' : 'false');
+    formData.append('is_featured', isFeatured ? 'true' : 'false');
 
-      if (selectedCategory) formData.append('category', selectedCategory);
-      selectedTags.forEach((id) => formData.append('tags', String(id)));
+    if (selectedCategory) formData.append('category', selectedCategory);
+    selectedTags.forEach((id) => formData.append('tags', String(id)));
 
-      images.forEach((img, i) => {
-        if (img.file) formData.append(`images[${i}][image]`, img.file);
-        formData.append(`images[${i}][is_main]`, String(img.isMain));
-      });
+    images.forEach((img, i) => {
+      if (img.file) formData.append(`images[${i}][image]`, img.file);
+      formData.append(`images[${i}][is_main]`, String(img.isMain));
+    });
 
-      attributes.forEach((attr, i) => {
-        formData.append(`attributes[${i}][name]`, attr.name);
-        formData.append(`attributes[${i}][value]`, attr.value);
-      });
+    attributes.forEach((attr, i) => {
+      formData.append(`attributes[${i}][name]`, attr.name);
+      formData.append(`attributes[${i}][value]`, attr.value);
+    });
 
-      if (codesText.trim()) {
-        const codeArray = codesText
-          .split('\n')
-          .map((c) => c.trim())
-          .filter(Boolean);
-        formData.append('codes', JSON.stringify(codeArray));
-      }
-
-      await dashboardService.adminCreateProductFull(formData);
-      toast.success('Product created successfully!');
-      await authService.clearCache();
-      images.forEach((img) => {
-        if (img.file && img.url.startsWith('blob:')) {
-          URL.revokeObjectURL(img.url);
-        }
-      });
-      router.push('/dashboard/products');
-    } catch (err: unknown) {
-      const axErr = err as { response?: { data?: Record<string, unknown> } };
-      const raw = axErr?.response?.data as Record<string, unknown> | undefined;
-      const errors = raw?.errors as Record<string, unknown> | undefined;
-      const message = raw?.message as string | undefined;
-      if (errors && typeof errors === 'object') {
-        const fieldErrors = Object.entries(errors)
-          .map(([field, msgs]) => {
-            const msgStr = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
-            return `${field}: ${msgStr}`;
-          })
-          .slice(0, 4)
-          .join('\n');
-        toast.error(`Validation failed:\n${fieldErrors}`);
-      } else {
-        toast.error(message ?? 'Failed to create product. Please check all fields.');
-      }
-    } finally {
-      setSubmitting(false);
+    if (codesText.trim()) {
+      const codeArray = codesText
+        .split('\n')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      formData.append('codes', JSON.stringify(codeArray));
     }
+
+    createMutation.mutate(formData, {
+      onSuccess: () => {
+        images.forEach(img => {
+          if (img.file && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+        });
+        router.push('/dashboard/products');
+      }
+    });
   };
+
+  const submitting = createMutation.isPending;
 
   return (
     <div className="space-y-8 w-full">
@@ -325,9 +304,19 @@ export default function AdminProductCreatePage() {
           selectedTags={selectedTags}
           newTagInput={newTagInput}
           setNewTagInput={setNewTagInput}
-          addingTag={addingTag}
+          addingTag={createTagMutation.isPending}
           handleAddNewTag={handleAddNewTag}
           toggleTag={toggleTag}
+          onDeleteTag={(tag) =>
+            deleteTagMutation.mutate(tag.slug, {
+              onSuccess: () => setSelectedTags((prev) => prev.filter((t) => t !== tag.id)),
+            })
+          }
+          deletingTagId={
+            deleteTagMutation.isPending && typeof deleteTagMutation.variables === 'string'
+              ? tags.find((t) => t.slug === deleteTagMutation.variables)?.id ?? null
+              : null
+          }
         />
 
         <ProductAttributes

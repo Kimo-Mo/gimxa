@@ -117,7 +117,7 @@ export function ProductTable({ products, loading, setDeleteSlug }: ProductTableP
                   <Badge
                     className={
                       product.is_active
-                        ? 'bg-success/20 text-success hover:bg-success/30 border-none'
+                        ? 'bg-success/30 text-success hover:bg-success/30 border-none'
                         : 'bg-muted/60 text-muted-foreground hover:bg-muted border-none'
                     }>
                     {product.is_active ? 'Active' : 'Inactive'}

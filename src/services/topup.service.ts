@@ -1,3 +1,4 @@
+import { AdminTopupListParams } from '@/types/admin/topups';
 import api from '../lib/api/axios';
 import {
   TopupsListParams,
@@ -28,7 +29,7 @@ export const topupService = {
   },
 
   // Admin
-  adminTopupsList: async (params?: TopupsListParams) => {
+  adminTopupsList: async (params?: AdminTopupListParams) => {
     const { data } = await api.get('/topup/admin/topups', { params });
     return data;
   },

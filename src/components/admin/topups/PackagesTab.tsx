@@ -119,7 +119,6 @@ export function PackagesTab({
                   <Label className="text-foreground text-xs">Price ($) *</Label>
                   <input
                     type="number"
-                    step="0.01"
                     min={0}
                     value={pkg.price}
                     onChange={(e) => {

@@ -1,17 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { dashboardService } from '@/services/dashboard.service';
-import { catalogService } from '@/services/catalog.service';
-import type { Product, ProductCategory, ProductTag } from '@/types/catalog';
 import { toast } from 'sonner';
-import { authService } from '@/services/auth.service';
 
 import type { StockMode, AttributeRow, ImageState } from '@/components/admin/products/types';
 import { ProductBasicInfo } from '@/components/admin/products/ProductBasicInfo';
@@ -20,15 +16,18 @@ import { ProductTags } from '@/components/admin/products/ProductTags';
 import { ProductAttributes } from '@/components/admin/products/ProductAttributes';
 import { ProductCodes } from '@/components/admin/products/ProductCodes';
 
+import { useCategoriesQuery } from '@/hooks/admin/useCategoriesQuery';
+import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
+import { useProductDetailQuery } from '@/hooks/admin/useProductDetailQuery';
+import { useUpdateProductMutation } from '@/hooks/admin/useUpdateProductMutation';
+import { useCreateTagMutation, useDeleteTagMutation } from '@/hooks/admin/useTagMutations';
+import type { ProductTag } from '@/types/catalog';
+
 export default function AdminProductEditPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params?.slug as string;
-
-  // Loading states
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const imagesRef = useRef<ImageState[]>([]);
 
   // Form states
   const [name, setName] = useState('');
@@ -53,13 +52,13 @@ export default function AdminProductEditPage() {
   const [codesText, setCodesText] = useState('');
 
   // Categories & Tags
-  const [allCategories, setAllCategories] = useState<ProductCategory[]>([]);
-  const [allTags, setAllTags] = useState<ProductTag[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
-  const [addingTag, setAddingTag] = useState(false);
+  const isHydrated = useRef(false);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
 
   const clearError = (field: string) =>
     setErrors((prev) => {
@@ -68,93 +67,95 @@ export default function AdminProductEditPage() {
       return next;
     });
 
-  // Fetch initial option lists
+  // Queries & Mutations
+  const categoriesQuery = useCategoriesQuery();
+  const tagsQuery = useTagsQuery();
+  const productQuery = useProductDetailQuery(slug);
+  const updateMutation = useUpdateProductMutation();
+  const createTagMutation = useCreateTagMutation();
+  const deleteTagMutation = useDeleteTagMutation();
+
+  const allCategories = categoriesQuery.data?.filter((c) => !c.name.startsWith('Topup')) ?? [];
+  const allTags = tagsQuery.data ?? [];
+
+  // Data hydration
   useEffect(() => {
-    Promise.all([
-      catalogService.adminCategoriesList().catch(() => []),
-      catalogService.adminTagsList().catch(() => []),
-    ]).then(([catData, tagData]) => {
-      setAllCategories(
-        Array.isArray(catData)
-          ? catData
-          : (catData?.results ?? []).filter(
-              (category: ProductCategory) => !category.name.startsWith('Topup')
-            )
+    if (!productQuery.data || isHydrated.current) return;
+    isHydrated.current = true;
+
+    const data = productQuery.data;
+
+    const nextImages: ImageState[] = data.images?.length
+      ? data.images.map((img) => ({ id: img.id, url: img.image, isMain: img.is_main }))
+      : data.main_image && typeof data.main_image === 'object'
+        ? [{ id: data.main_image.id, url: data.main_image.image, isMain: data.main_image.is_main }]
+        : [];
+
+    const nextAttributes: AttributeRow[] = (data.attributes ?? []).map((attr) => ({
+      id: attr.id,
+      name: attr.name,
+      value: attr.value,
+    }));
+
+    const dataWithCategory = data as unknown as { category?: { id: number } };
+    const nextCategory = dataWithCategory.category
+      ? String(dataWithCategory.category.id)
+      : data.categories?.length
+        ? String(data.categories[0].id)
+        : '';
+
+    startTransition(() => {
+      setName(data.name || '');
+      setPrice(data.price ? String(Number(data.price).toFixed(2)) : '');
+      setStockMode((data.stock_mode as StockMode) || 'automatic');
+      setManualFulfillmentTime(
+        data.manual_fulfillment_time ? String(data.manual_fulfillment_time) : ''
       );
-      setAllTags(Array.isArray(tagData) ? tagData : (tagData?.results ?? []));
+      setShortDescription(data.short_description || '');
+      setDescription(data.description || '');
+      setIsActive(data.is_active ?? true);
+      setIsAvailable(data.is_available ?? true);
+      setIsPopular(data.is_popular ?? false);
+      setIsFeatured(data.is_featured ?? false);
+      setRegion(data.region ?? 'global');
+      setImages(nextImages);
+      setAttributes(nextAttributes);
+      setSelectedCategory(nextCategory);
+      setSelectedTags(data.tags?.map((t) => t.id) ?? []);
     });
+
+    // isDirty reset still needs the timeout since it runs after the above batch
+    setTimeout(() => setIsDirty(false), 0);
+  }, [productQuery.data]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  const markDirty = () => !isDirty && setIsDirty(true);
+
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach((img) => {
+        if (img.file && img.url.startsWith('blob:')) {
+          URL.revokeObjectURL(img.url);
+        }
+      });
+    };
   }, []);
 
-  // Fetch product data
-  useEffect(() => {
-    if (!slug) return;
-
-    setInitialLoading(true);
-    catalogService
-      .adminGetProduct(slug)
-      .then((data: Product) => {
-        setName(data.name || '');
-        setPrice(data.price ? String(data.price) : '');
-        setStockMode((data.stock_mode as StockMode) || 'automatic');
-        setManualFulfillmentTime(
-          data.manual_fulfillment_time ? String(data.manual_fulfillment_time) : ''
-        );
-        setShortDescription(data.short_description || '');
-        setDescription(data.description || '');
-        setIsActive(data.is_active ?? true);
-        setIsAvailable(data.is_available ?? true);
-        setIsPopular(data.is_popular ?? false);
-        setIsFeatured(data.is_featured ?? false);
-        setRegion(data.region ?? 'global');
-
-        // Images
-        if (data.images && data.images.length > 0) {
-          setImages(
-            data.images.map((img) => ({
-              id: img.id,
-              url: img.image,
-              isMain: img.is_main,
-            }))
-          );
-        } else if (data.main_image && typeof data.main_image === 'object') {
-          setImages([
-            {
-              id: (data.main_image).id,
-              url: (data.main_image).image,
-              isMain: (data.main_image).is_main,
-            },
-          ]);
-        }
-
-        // Attributes
-        if (data.attributes) {
-          setAttributes(
-            data.attributes.map((attr) => ({
-              id: attr.id,
-              name: attr.name,
-              value: attr.value,
-            }))
-          );
-        }
-
-        // Categories & Tags — take the first category as the selected one
-        if (data.categories && data.categories.length > 0) {
-          setSelectedCategory(String(data.categories[0].id));
-        }
-        if (data.tags) {
-          setSelectedTags(data.tags.map((t) => t.id));
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Failed to load product. It may not exist.');
-      })
-      .finally(() => {
-        setInitialLoading(false);
-      });
-  }, [slug]);
-
-  // Image Handlers
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     const newImages = files.map((file) => ({
@@ -165,17 +166,18 @@ export default function AdminProductEditPage() {
 
     setImages((prev) => {
       const combined = [...prev, ...newImages];
-      // If we didn't have any images at all, make the first one main
       if (combined.length > 0 && !combined.some((img) => img.isMain)) {
         combined[0].isMain = true;
       }
       return combined;
     });
+    markDirty();
     e.target.value = '';
   };
 
   const setMainImage = (index: number) => {
     setImages((prev) => prev.map((img, i) => ({ ...img, isMain: i === index })));
+    markDirty();
   };
 
   const removeImage = (index: number) => {
@@ -183,6 +185,8 @@ export default function AdminProductEditPage() {
       const removedImg = prev[index];
       if (removedImg.id) {
         setDeletedImages((d) => [...d, removedImg.id as number]);
+      } else if (removedImg.url.startsWith('blob:')) {
+        URL.revokeObjectURL(removedImg.url);
       }
       const next = prev.filter((_, i) => i !== index);
       if (next.length > 0 && !next.some((img) => img.isMain)) {
@@ -190,10 +194,14 @@ export default function AdminProductEditPage() {
       }
       return next;
     });
+    markDirty();
   };
 
-  // Attribute Handlers
-  const addAttribute = () => setAttributes((prev) => [...prev, { name: '', value: '' }]);
+  const addAttribute = () => {
+    setAttributes((prev) => [...prev, { name: '', value: '' }]);
+    markDirty();
+  };
+
   const removeAttribute = (i: number) => {
     setAttributes((prev) => {
       const removedAttr = prev[i];
@@ -202,47 +210,46 @@ export default function AdminProductEditPage() {
       }
       return prev.filter((_, idx) => idx !== i);
     });
+    markDirty();
   };
+
   const updateAttribute = (i: number, field: keyof AttributeRow, value: string) => {
     setAttributes((prev) => prev.map((a, idx) => (idx === i ? { ...a, [field]: value } : a)));
+    markDirty();
   };
 
-  // Tag Toggles
   const toggleTag = (id: number) => {
     setSelectedTags((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
+    markDirty();
   };
 
-  const handleAddNewTag = async () => {
+  const handleAddNewTag = () => {
     const trimmed = newTagInput.trim();
     if (!trimmed) return;
     const existing = allTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
     if (existing) {
       setSelectedTags((prev) => (prev.includes(existing.id) ? prev : [...prev, existing.id]));
       setNewTagInput('');
+      markDirty();
       return;
     }
-    setAddingTag(true);
-    try {
-      const created = await catalogService.adminAddTag({ name: trimmed });
-      const newTag: ProductTag = created;
-      setAllTags((prev) => [...prev, newTag]);
-      setSelectedTags((prev) => [...prev, newTag.id]);
-      setNewTagInput('');
-    } catch {
-      toast.error('Failed to add tag.');
-    } finally {
-      setAddingTag(false);
-    }
+    createTagMutation.mutate(trimmed, {
+      onSuccess: (newTag: ProductTag) => {
+        setSelectedTags((prev) => [...prev, newTag.id]);
+        setNewTagInput('');
+        markDirty();
+      },
+    });
   };
 
-  // Submit Handler
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Product name is required.';
-    if (!price || parseFloat(price) <= 0)
-      newErrors.price = 'Price is required and must be greater than 0.';
+    // Update US1 regex price validation
+    if (!price || parseFloat(price) <= 0 || !/^\d+(\.\d{1,2})?$/.test(price))
+      newErrors.price = 'Price is required, must be > 0, and max 2 decimal places.';
     if (!selectedCategory) newErrors.category = 'Category is required.';
     if (!stockMode) newErrors.stockMode = 'Stock mode is required.';
     if (stockMode === 'manual' && !manualFulfillmentTime)
@@ -257,90 +264,72 @@ export default function AdminProductEditPage() {
     }
     setErrors({});
 
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('product_type', 'digital');
-      formData.append('stock_mode', stockMode);
-      formData.append('region', region);
-      if (price) formData.append('price', price);
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('product_type', 'digital');
+    formData.append('stock_mode', stockMode);
+    formData.append('region', region);
+    if (price) formData.append('price', price);
 
-      if (stockMode === 'manual' && manualFulfillmentTime) {
-        formData.append('manual_fulfillment_time', manualFulfillmentTime);
-      } else if (stockMode === 'automatic') {
-        formData.append('manual_fulfillment_time', '0');
-      }
-
-      formData.append('short_description', shortDescription);
-      formData.append('description', description);
-      formData.append('is_active', isActive ? 'true' : 'false');
-      formData.append('is_available', isAvailable ? 'true' : 'false');
-      formData.append('is_popular', isPopular ? 'true' : 'false');
-      formData.append('is_featured', isFeatured ? 'true' : 'false');
-
-      // Backend field name is 'category' (M2M source alias), NOT 'categories'
-      if (selectedCategory) formData.append('category', selectedCategory);
-      selectedTags.forEach((id) => formData.append('tags', String(id)));
-
-      // Images (indexed)
-      images.forEach((img, i) => {
-        if (img.id) formData.append(`images[${i}][id]`, String(img.id));
-        if (img.file) formData.append(`images[${i}][image]`, img.file);
-        formData.append(`images[${i}][is_main]`, String(img.isMain));
-      });
-      if (deletedImages.length > 0) {
-        formData.append('deleted_images', JSON.stringify(deletedImages));
-      }
-
-      // Attributes (indexed)
-      attributes.forEach((attr, i) => {
-        if (attr.id) formData.append(`attributes[${i}][id]`, String(attr.id));
-        formData.append(`attributes[${i}][name]`, attr.name);
-        formData.append(`attributes[${i}][value]`, attr.value);
-      });
-      if (deletedAttributes.length > 0) {
-        formData.append('deleted_attributes', JSON.stringify(deletedAttributes));
-      }
-
-      // New Codes (for non-topup products)
-      if (codesText.trim()) {
-        const codeArray = codesText
-          .split('\n')
-          .map((c) => c.trim())
-          .filter(Boolean);
-        if (codeArray.length > 0) {
-          formData.append('codes', JSON.stringify(codeArray));
-        }
-      }
-
-      await dashboardService.adminUpdateProductFull(slug, formData);
-      toast.success('Product updated successfully!');
-      await authService.clearCache();
-      router.push('/dashboard/products');
-    } catch (err: unknown) {
-      const axErr = err as { response?: { data?: Record<string, unknown> } };
-      const raw = axErr?.response?.data as Record<string, unknown> | undefined;
-      const errors = raw?.errors as Record<string, unknown> | undefined;
-      const message = raw?.message as string | undefined;
-      if (errors && typeof errors === 'object') {
-        const fieldErrors = Object.entries(errors)
-          .map(([field, msgs]) => {
-            const msgStr = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
-            return `${field}: ${msgStr}`;
-          })
-          .slice(0, 4)
-          .join('\n');
-        toast.error(`Validation failed:\n${fieldErrors}`);
-      } else {
-        toast.error(message ?? 'Failed to update product.');
-      }
-    } finally {
-      setSubmitting(false);
+    if (stockMode === 'manual' && manualFulfillmentTime) {
+      formData.append('manual_fulfillment_time', manualFulfillmentTime);
+    } else if (stockMode === 'automatic') {
+      formData.append('manual_fulfillment_time', '0');
     }
+
+    formData.append('short_description', shortDescription);
+    formData.append('description', description);
+    formData.append('is_active', isActive ? 'true' : 'false');
+    formData.append('is_available', isAvailable ? 'true' : 'false');
+    formData.append('is_popular', isPopular ? 'true' : 'false');
+    formData.append('is_featured', isFeatured ? 'true' : 'false');
+
+    if (selectedCategory) formData.append('category', selectedCategory);
+    selectedTags.forEach((id) => formData.append('tags', String(id)));
+
+    images.forEach((img, i) => {
+      if (img.id) formData.append(`images[${i}][id]`, String(img.id));
+      if (img.file) formData.append(`images[${i}][image]`, img.file);
+      formData.append(`images[${i}][is_main]`, String(img.isMain));
+    });
+    if (deletedImages.length > 0) {
+      formData.append('deleted_images', JSON.stringify(deletedImages));
+    }
+
+    attributes.forEach((attr, i) => {
+      if (attr.id) formData.append(`attributes[${i}][id]`, String(attr.id));
+      formData.append(`attributes[${i}][name]`, attr.name);
+      formData.append(`attributes[${i}][value]`, attr.value);
+    });
+    if (deletedAttributes.length > 0) {
+      formData.append('deleted_attributes', JSON.stringify(deletedAttributes));
+    }
+
+    if (codesText.trim()) {
+      const codeArray = codesText
+        .split('\n')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (codeArray.length > 0) {
+        formData.append('codes', JSON.stringify(codeArray));
+      }
+    }
+
+    updateMutation.mutate(
+      { slug, formData },
+      {
+        onSuccess: () => {
+          setIsDirty(false); // Clear before routing to prevent warning
+          images.forEach((img) => {
+            if (img.file && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+          });
+          router.push('/dashboard/products');
+        },
+      }
+    );
   };
 
-  if (initialLoading) {
+  if (productQuery.isPending) {
     return (
       <div className="space-y-6 max-w-4xl">
         <div className="flex items-center gap-4">
@@ -359,10 +348,10 @@ export default function AdminProductEditPage() {
     );
   }
 
-  if (error) {
+  if (productQuery.isError) {
     return (
       <div className="text-center py-16 space-y-4 max-w-4xl mx-auto">
-        <p className="text-destructive font-medium">{error}</p>
+        <p className="text-destructive font-medium">Failed to load product. It may not exist.</p>
         <Link href="/dashboard/products">
           <Button variant="outline">← Back to Products</Button>
         </Link>
@@ -389,7 +378,7 @@ export default function AdminProductEditPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" onChange={() => markDirty()}>
         <ProductBasicInfo
           name={name}
           setName={setName}
@@ -433,9 +422,19 @@ export default function AdminProductEditPage() {
           selectedTags={selectedTags}
           newTagInput={newTagInput}
           setNewTagInput={setNewTagInput}
-          addingTag={addingTag}
+          addingTag={createTagMutation.isPending}
           handleAddNewTag={handleAddNewTag}
           toggleTag={toggleTag}
+          onDeleteTag={(tag) =>
+            deleteTagMutation.mutate(tag.slug, {
+              onSuccess: () => setSelectedTags((prev) => prev.filter((t) => t !== tag.id)),
+            })
+          }
+          deletingTagId={
+            deleteTagMutation.isPending && typeof deleteTagMutation.variables === 'string'
+              ? allTags.find((t) => t.slug === deleteTagMutation.variables)?.id ?? null
+              : null
+          }
         />
 
         <ProductAttributes
@@ -448,7 +447,10 @@ export default function AdminProductEditPage() {
         {stockMode === 'automatic' && (
           <ProductCodes
             codesText={codesText}
-            setCodesText={setCodesText}
+            setCodesText={(val) => {
+              setCodesText(val);
+              markDirty();
+            }}
             errors={errors}
             clearError={clearError}
             isEditMode
@@ -457,15 +459,19 @@ export default function AdminProductEditPage() {
 
         <div className="flex gap-3 justify-end pb-8">
           <Link href="/dashboard/products">
-            <Button type="button" variant="outline" className="border-border">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-border"
+              disabled={updateMutation.isPending}>
               Cancel
             </Button>
           </Link>
           <Button
             type="submit"
-            disabled={submitting}
+            disabled={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground min-w-32 gap-2">
-            {submitting ? (
+            {updateMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Saving...

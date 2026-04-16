@@ -16,6 +16,11 @@
 - Q: Which endpoint should the top-up delete mutation use? → A: `catalogService.adminDeleteProduct(slug)` — the general product delete endpoint, consistent with the existing legacy behavior.
 - Q: What staleTime applies to categories and tags queries, and how are new tags handled? → A: Categories `staleTime: Infinity` (static reference data). Tags `staleTime: 5 min`; when a new tag is created, `queryClient.invalidateQueries` for the tags key MUST be called immediately. Admins must also be able to delete tags from within the Create/Edit Product forms.
 
+### Session 2026-04-16
+
+- Q: Should the UI warn the user about unsaved changes before navigating away from creation/edit forms? → A: Implement standard browser warning for unsaved changes before navigation.
+- Q: If the sequential save for Top-Up Game Info + Active Status partially fails, how should the frontend handle it? → A: Treat as partial success: clear cache, invalidate queries, and show a warning toast for the failed part.
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -221,6 +226,8 @@ saves, and sees the updated name reflected without refreshing the page.
 - What if `adminDeleteTag` does not yet exist in `catalogService`? A new
   `adminDeleteTag(id: number)` method calling `DELETE /catalog/admin/tags/{id}/`
   MUST be added to `catalogService` as part of this phase.
+- What if the admin attempts to navigate away from any create or edit form with unsaved changes? The UI MUST intercept the navigation and display a standard browser warning to prevent accidental data loss.
+- What if a sequential save on the Top-Up edit page partially fails (e.g., `adminUpdateProductFull` succeeds but `adminUpdateTopup` fails)? The UI MUST treat it as a partial success: it MUST still execute the cache clear and query invalidation for the successful update, and display a specific warning toast indicating which part of the save failed.
 
 ---
 
@@ -232,7 +239,7 @@ saves, and sees the updated name reflected without refreshing the page.
 
 - **FR-P01**: The Products list page MUST fetch products via `useQuery` with
   server-side pagination (`page`, `page_size`), `search`, `category`, and a
-  `product_type` exclusion param that filters out top-up products at the API
+  `filter='product_type= digital'` exclusion param that filters out top-up products at the API
   level — ensuring pagination counts are accurate and no client-side array
   filtering is needed.
 - **FR-P02**: The Products list MUST use a 400 ms debounce on the search input
