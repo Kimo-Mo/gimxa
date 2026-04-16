@@ -10,8 +10,8 @@ export const codeService = {
     const { data } = await api.put(`/codes/admin/product/${slug}/`, payload);
     return data;
   },
-  adminCodeListForProduct: async (slug: string, payload?: { package_id?: string }) => {
-    const { data } = await api.get(`/codes/admin/product/${slug}/`, { data: payload });
+  adminCodeListForProduct: async (slug: string) => {
+    const { data } = await api.get(`/codes/admin/product/${slug}/`);
     return data;
   },
   adminCodeListForProductPackage: async (slug: string, params?: { package_id?: string }) => {

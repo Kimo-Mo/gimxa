@@ -13,6 +13,7 @@ export const useUpdateProductMutation = () => {
       await cacheClear();
       queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'product', slug] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'codes', slug] });
       toast.success('Product updated successfully!');
     },
     onError: (err: unknown) => {

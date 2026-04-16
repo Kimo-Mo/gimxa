@@ -1,4 +1,5 @@
 import { Plus, Trash2, Loader2, Save } from 'lucide-react';
+import { PackageCodeSection } from './PackageCodeSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import {
 import type { PackageForm, StockMode } from './types';
 
 interface PackagesTabProps {
+  slug?: string;
   packages: PackageForm[];
   addPackage: () => void;
   updatePackage: (i: number, key: keyof PackageForm, value: unknown) => void;
@@ -25,6 +27,7 @@ interface PackagesTabProps {
 }
 
 export function PackagesTab({
+  slug,
   packages,
   addPackage,
   updatePackage,
@@ -219,6 +222,9 @@ export function PackagesTab({
                   </label>
                 ))}
               </div>
+              {slug && pkg.id && pkg.stock_mode === 'automatic' && (
+                <PackageCodeSection slug={slug} packageId={pkg.id} />
+              )}
             </div>
           ))
         )}

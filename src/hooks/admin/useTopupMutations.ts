@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import type { FieldForm, PackageForm } from '@/components/admin/topups/types';
 import type { AdminTopupFieldPayload } from '@/types/admin/topups';
+import { AdminCodePayload } from '@/types';
 
 export const useUpdateTopupGameInfoMutation = (slug: string) => {
   const queryClient = useQueryClient();
@@ -20,9 +21,12 @@ export const useUpdateTopupGameInfoMutation = (slug: string) => {
     onSuccess: async (data) => {
       await cacheClear();
       queryClient.invalidateQueries({ queryKey: ['admin', 'topup', slug] });
-      
+      queryClient.invalidateQueries({ queryKey: ['admin', 'topups'] });
+
       if (data?.status === 'partial_success' || data?.message?.includes('partial')) {
-        toast.warning(data?.message || 'Game info partially updated. Some fields may not have saved.');
+        toast.warning(
+          data?.message || 'Game info partially updated. Some fields may not have saved.'
+        );
       } else {
         toast.success('Game info updated successfully.');
       }
@@ -33,7 +37,13 @@ export const useUpdateTopupGameInfoMutation = (slug: string) => {
   });
 };
 
-export const useSaveTopupFieldsMutation = ({ slug, topupId }: { slug: string; topupId: number }) => {
+export const useSaveTopupFieldsMutation = ({
+  slug,
+  topupId,
+}: {
+  slug: string;
+  topupId: number;
+}) => {
   const queryClient = useQueryClient();
   const cacheClear = useCacheClear();
 
@@ -42,9 +52,13 @@ export const useSaveTopupFieldsMutation = ({ slug, topupId }: { slug: string; to
       for (const field of fields) {
         let autoKey = field.key;
         if (!autoKey && field.title) {
-          autoKey = field.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/, '');
+          autoKey = field.title
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/, '');
         }
-        
+
         const payload = {
           title: field.title,
           placeholder: field.placeholder,
@@ -57,14 +71,20 @@ export const useSaveTopupFieldsMutation = ({ slug, topupId }: { slug: string; to
 
         let currentFieldId = field.id;
         if (field.id) {
-          await topupService.adminUpdateField(field.id, payload as unknown as AdminTopupFieldPayload);
+          await topupService.adminUpdateField(
+            field.id,
+            payload as unknown as AdminTopupFieldPayload
+          );
         } else {
-          const res = await topupService.adminAddField({ ...payload, game: topupId } as unknown as AdminTopupFieldPayload);
+          const res = await topupService.adminAddField({
+            ...payload,
+            game: topupId,
+          } as unknown as AdminTopupFieldPayload);
           const created = Array.isArray(res) ? res[0] : res;
           currentFieldId = created.id;
         }
 
-        for (const help of (field.helps || [])) {
+        for (const help of field.helps || []) {
           if (!help.id && !help.description.trim()) continue;
           const helpFd = new FormData();
           if (currentFieldId) {
@@ -85,6 +105,7 @@ export const useSaveTopupFieldsMutation = ({ slug, topupId }: { slug: string; to
     onSuccess: async () => {
       await cacheClear();
       queryClient.invalidateQueries({ queryKey: ['admin', 'topup', slug] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'topups'] });
       toast.success('Fields saved successfully.');
     },
     onError: () => {
@@ -93,7 +114,13 @@ export const useSaveTopupFieldsMutation = ({ slug, topupId }: { slug: string; to
   });
 };
 
-export const useSaveTopupPackagesMutation = ({ slug, topupId }: { slug: string; topupId: number }) => {
+export const useSaveTopupPackagesMutation = ({
+  slug,
+  topupId,
+}: {
+  slug: string;
+  topupId: number;
+}) => {
   const queryClient = useQueryClient();
   const cacheClear = useCacheClear();
 
@@ -125,10 +152,21 @@ export const useSaveTopupPackagesMutation = ({ slug, topupId }: { slug: string; 
         }
 
         if (pkg.stock_mode === 'automatic' && pkg.codes?.trim() && pkgId) {
-           const codeArray = pkg.codes.split('\n').map((c: string) => c.trim()).filter(Boolean);
-           if (codeArray.length > 0) {
-             await codeService.adminAddUpdateDeleteCodes(slug, { codes: codeArray, package_id: String(pkgId) } as unknown as import('@/types').AdminCodePayload);
-           }
+          const codeArray = pkg.codes
+            .split('\n')
+            .map((c: string) => c.trim())
+            .filter(Boolean);
+          if (codeArray.length > 0) {
+            // Fetch existing codes to prevent overwriting during PUT sync
+            const existingData = await codeService.adminCodeListForProductPackage(slug, { package_id: String(pkgId) });
+            const existingCodes = (existingData.codes || []).map((c: { code: string }) => c.code);
+            const fullCodesList = [...existingCodes, ...codeArray].join('\n');
+
+            await codeService.adminAddUpdateDeleteCodes(slug, {
+              codes: fullCodesList,
+              package_id: String(pkgId),
+            } as AdminCodePayload);
+          }
         }
       }
     },
@@ -136,6 +174,8 @@ export const useSaveTopupPackagesMutation = ({ slug, topupId }: { slug: string; 
       await cacheClear();
       queryClient.invalidateQueries({ queryKey: ['admin', 'topup', slug] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'packages', slug] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'codes', slug] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'topups'] });
       toast.success('Packages saved successfully.');
     },
     onError: () => {
@@ -156,7 +196,8 @@ export const useDeleteTopupItemMutation = (slug: string) => {
     onSuccess: async (_, { type }) => {
       await cacheClear();
       queryClient.invalidateQueries({ queryKey: ['admin', 'topup', slug] });
-      if (type === 'package') queryClient.invalidateQueries({ queryKey: ['admin', 'packages', slug] });
+      if (type === 'package')
+        queryClient.invalidateQueries({ queryKey: ['admin', 'packages', slug] });
       toast.success(`${type === 'field' ? 'Field' : 'Package'} deleted.`);
     },
     onError: (_, { type }) => {

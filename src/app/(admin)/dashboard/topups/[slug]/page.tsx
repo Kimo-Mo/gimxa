@@ -95,7 +95,9 @@ export default function AdminTopupDetailPage() {
   const packagesMutation = useSaveTopupPackagesMutation({ slug, topupId });
   const deleteItemMutation = useDeleteTopupItemMutation(slug);
 
-  const categories = (categoriesQuery.data ?? []).filter((c: ProductCategory) => c.name.startsWith('Topup'));
+  const categories = (categoriesQuery.data ?? []).filter((c: ProductCategory) =>
+    c.name.startsWith('Topup')
+  );
 
   useEffect(() => {
     if (!topupQuery.data || topupHydrated.current) return;
@@ -182,7 +184,6 @@ export default function AdminTopupDetailPage() {
       setPackages(nextPackages);
     });
   }, [packagesQuery.data]);
-
 
   // ── Game Info helpers ─────────────────────────────────────────────
   const handleSaveGameInfo = () => {
@@ -286,7 +287,11 @@ export default function AdminTopupDetailPage() {
       return;
     }
     setPkgErrors({});
-    packagesMutation.mutate(packages);
+    packagesMutation.mutate(packages, {
+      onSuccess: () => {
+        setPackages((prev) => prev.map((p) => ({ ...p, codes: '' })));
+      },
+    });
   };
 
   if (topupQuery.isPending) {
@@ -313,14 +318,14 @@ export default function AdminTopupDetailPage() {
   }
 
   const tabCls =
-    'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm px-5';
+    'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-5 flex-1 sm:flex-none';
 
   return (
     <div className="space-y-8">
       <EditTopupHeader title={topupQuery.data.product?.name ?? `TopUp #${topupQuery.data.id}`} />
 
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="bg-muted p-1 border border-border inline-flex mb-6">
+        <TabsList className="bg-muted p-1 border border-border flex sm:inline-flex h-auto w-full sm:w-fit gap-1 mb-6">
           <TabsTrigger value="info" className={tabCls}>
             Game Info
           </TabsTrigger>
@@ -382,6 +387,7 @@ export default function AdminTopupDetailPage() {
 
         <TabsContent value="packages" className="m-0 focus-visible:outline-none">
           <PackagesTab
+            slug={slug}
             packages={packages}
             addPackage={addPackage}
             updatePackage={updatePackage}

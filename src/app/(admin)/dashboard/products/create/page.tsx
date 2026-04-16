@@ -19,10 +19,12 @@ import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
 import { useCreateProductMutation } from '@/hooks/admin/useCreateProductMutation';
 import { useCreateTagMutation, useDeleteTagMutation } from '@/hooks/admin/useTagMutations';
 import type { ProductTag } from '@/types/catalog';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdminProductCreatePage() {
   const router = useRouter();
   const imagesRef = useRef<ImageState[]>([]);
+  const queryClient = useQueryClient();
 
   // Basic fields
   const [name, setName] = useState('');
@@ -236,6 +238,7 @@ export default function AdminProductCreatePage() {
         images.forEach(img => {
           if (img.file && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
         });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
         router.push('/dashboard/products');
       }
     });

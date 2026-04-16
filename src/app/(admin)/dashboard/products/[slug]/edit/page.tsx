@@ -14,7 +14,7 @@ import { ProductBasicInfo } from '@/components/admin/products/ProductBasicInfo';
 import { ProductImages } from '@/components/admin/products/ProductImages';
 import { ProductTags } from '@/components/admin/products/ProductTags';
 import { ProductAttributes } from '@/components/admin/products/ProductAttributes';
-import { ProductCodes } from '@/components/admin/products/ProductCodes';
+import { ProductCodeInventory } from '@/components/admin/products/ProductCodeInventory';
 
 import { useCategoriesQuery } from '@/hooks/admin/useCategoriesQuery';
 import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
@@ -45,7 +45,6 @@ export default function AdminProductEditPage() {
   // Collections
   const [images, setImages] = useState<ImageState[]>([]);
   const [deletedImages, setDeletedImages] = useState<number[]>([]);
-
   const [attributes, setAttributes] = useState<AttributeRow[]>([]);
   const [deletedAttributes, setDeletedAttributes] = useState<number[]>([]);
 
@@ -320,9 +319,11 @@ export default function AdminProductEditPage() {
       {
         onSuccess: () => {
           setIsDirty(false); // Clear before routing to prevent warning
+          setCodesText('');
           images.forEach((img) => {
             if (img.file && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
           });
+          
           router.push('/dashboard/products');
         },
       }
@@ -432,7 +433,7 @@ export default function AdminProductEditPage() {
           }
           deletingTagId={
             deleteTagMutation.isPending && typeof deleteTagMutation.variables === 'string'
-              ? allTags.find((t) => t.slug === deleteTagMutation.variables)?.id ?? null
+              ? (allTags.find((t) => t.slug === deleteTagMutation.variables)?.id ?? null)
               : null
           }
         />
@@ -445,16 +446,23 @@ export default function AdminProductEditPage() {
         />
 
         {stockMode === 'automatic' && (
-          <ProductCodes
-            codesText={codesText}
-            setCodesText={(val) => {
-              setCodesText(val);
-              markDirty();
-            }}
-            errors={errors}
-            clearError={clearError}
-            isEditMode
-          />
+          <div className="space-y-1.5 p-4 rounded-lg border border-border bg-muted/10 mb-6">
+            <label htmlFor="newCodesText" className="text-sm font-medium text-foreground">
+              Bulk Add Codes{' '}
+              <span className="text-muted-foreground font-normal">(one per line)</span>
+            </label>
+            <textarea
+              id="newCodesText"
+              value={codesText}
+              onChange={(e) => setCodesText(e.target.value)}
+              placeholder={'CODE-AAAA-1111\nCODE-BBBB-2222\nCODE-CCCC-3333'}
+              rows={6}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <p className="text-xs text-muted-foreground">
+              {codesText.split('\n').filter((c) => c.trim()).length} code(s) entered
+            </p>
+          </div>
         )}
 
         <div className="flex gap-3 justify-end pb-8">
@@ -482,6 +490,12 @@ export default function AdminProductEditPage() {
           </Button>
         </div>
       </form>
+
+      {stockMode === 'automatic' && (
+        <div className="pt-2">
+          <ProductCodeInventory slug={slug} />
+        </div>
+      )}
     </div>
   );
 }

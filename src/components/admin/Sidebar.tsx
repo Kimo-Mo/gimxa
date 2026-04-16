@@ -2,14 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Users, Zap, Tag, Key, Bell } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Zap, Tag, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/dashboard/products', icon: Package },
   { name: 'Top-Ups', href: '/dashboard/topups', icon: Zap },
-  { name: 'Code Vault', href: '/dashboard/codes', icon: Key },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
   { name: 'Users', href: '/dashboard/users', icon: Users },
   { name: 'Coupons', href: '/dashboard/coupons', icon: Tag },

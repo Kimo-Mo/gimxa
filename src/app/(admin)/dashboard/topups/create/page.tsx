@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Zap } from 'lucide-react';
@@ -43,6 +44,7 @@ const defaultPackage = (): PackageForm => ({
 
 export default function AdminTopupCreatePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Product info
   const [gameName, setGameName] = useState('');
@@ -250,6 +252,7 @@ export default function AdminTopupCreatePage() {
 
       toast.success('Top-up game created successfully!');
       await authService.clearCache();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'topups'] });
       router.push(`/dashboard/topups`);
     } catch (err: unknown) {
       const axErr = err as {

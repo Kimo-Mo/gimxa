@@ -88,7 +88,7 @@ parallel development, and make UI regression testing tractable.
 
 ## Technical Stack & Rules
 
-- **Framework**: Next.js 15 (App Router). Server Components MUST be preferred
+- **Framework**: Next.js 16 (App Router). Server Components MUST be preferred
   for non-interactive views; Client Components are reserved for interactivity.
 - **Styling**: Tailwind CSS 4 exclusively. Inline `style` props and external
   CSS files are FORBIDDEN outside of global resets. All UI MUST be fully
