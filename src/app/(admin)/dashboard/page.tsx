@@ -11,46 +11,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreditCard, Users, ArrowRight, Package, Home } from 'lucide-react';
 import { orderService } from '@/services/order.service';
 import { userService } from '@/services/user.service';
 import { catalogService } from '@/services/catalog.service';
-import type { AdminOrder, OrderStatus } from '@/types/admin/orders';
+import type { AdminOrder } from '@/types/admin/orders';
 import type { PaginatedResponse } from '@/types/common';
 
-// ─── Status badge helper ────────────────────────────────────────────────
-function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  const config: Record<OrderStatus, { label: string; className: string }> = {
-    completed: {
-      label: 'Completed',
-      className: 'bg-success/20 text-success hover:bg-success/30 border-none',
-    },
-    pending: {
-      label: 'Pending',
-      className: 'bg-warning/20 text-warning hover:bg-warning/30 border-none',
-    },
-    processing: {
-      label: 'Processing',
-      className: 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-none',
-    },
-    failed: {
-      label: 'Failed',
-      className: 'bg-destructive/20 text-destructive hover:bg-destructive/30 border-none',
-    },
-    cancelled: {
-      label: 'Cancelled',
-      className: 'bg-muted/60 text-muted-foreground hover:bg-muted border-none',
-    },
-  };
-  const cfg = config[status] ?? {
-    label: status,
-    className: 'bg-muted/60 text-muted-foreground border-none',
-  };
-  return <Badge className={cfg.className}>{cfg.label}</Badge>;
-}
+import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
 
 // ─── Stat card skeleton ──────────────────────────────────────────────────
 function StatCardSkeleton() {

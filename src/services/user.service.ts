@@ -2,9 +2,8 @@ import api from '../lib/api/axios';
 import {
   UpdateProfilePayload,
   AdminAddUserPayload,
-  AdminUpdateUserPayload,
-  UserListParams,
 } from '@/types';
+import type { AdminUpdateUserPayload, UserListParams } from '@/types/admin/users';
 
 export const userService = {
   // Public user methods
@@ -57,7 +56,7 @@ export const userService = {
     return data;
   },
   adminDeleteUser: async (userId: string) => {
-    const { data } = await api.delete(`/users/admin/users/${userId}/`);
+    const { data } = await api.delete(`/users/user/${userId}/delete/`);
     return data;
   },
 };

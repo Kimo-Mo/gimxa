@@ -1,9 +1,8 @@
 export interface OrderListParams {
-  status?: string;
-  filter?: string;
+  filter?: string; //you can filter with ["status", "user", "total_price", "created_at", "subtotal", "discount_total", "coupon_code"]
   page?: number;
   page_size?: number;
-  search?: string;
+  search?: string; //you can search with (full_name or username or email) of users
 }
 
 export interface OrderBuyNowPayload {

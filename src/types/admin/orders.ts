@@ -1,6 +1,6 @@
 // Admin-scoped order types, sourced from OrderListSerializer & OrderDetailSerializer
 
-export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'failed' | 'processing';
+export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'paid' | 'processing' | 'failed';
 
 export interface OrderPaymentDetails {
   gateway_id: number;
@@ -39,6 +39,7 @@ export interface AdminOrderItem {
 export interface AdminOrderDetail {
   id: number;
   order_number: string;
+  user: string;
   status: OrderStatus;
   subtotal: string;
   tax: string;
@@ -59,4 +60,10 @@ export interface AdminOrderListParams {
 
 export interface AdminOrderUpdatePayload {
   status: OrderStatus;
+  send_notification?: boolean;
+  notification_data?: {
+    subject: string;
+    message: string;
+    email_type: string; // default: 'default'
+  };
 }

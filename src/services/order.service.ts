@@ -1,5 +1,6 @@
 import api from '../lib/api/axios';
-import { OrderListParams, OrderBuyNowPayload, OrderUpdatePayload } from '@/types';
+import { OrderListParams, OrderBuyNowPayload } from '@/types';
+import type { AdminOrderUpdatePayload } from '@/types/admin/orders';
 
 export const orderService = {
   // Public
@@ -33,7 +34,7 @@ export const orderService = {
     const { data } = await api.get(`/orders/admin/${id}`);
     return data;
   },
-  adminUpdateOrder: async (id: string, payload: OrderUpdatePayload) => {
+  adminUpdateOrder: async (id: string, payload: AdminOrderUpdatePayload) => {
     const { data } = await api.patch(`/orders/admin/${id}/`, payload);
     return data;
   },

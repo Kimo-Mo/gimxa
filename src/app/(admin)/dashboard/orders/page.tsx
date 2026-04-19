@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -11,50 +12,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { orderService } from '@/services/order.service';
 import { OrderDetailsModal } from '@/components/admin/modals/OrderDetailsModal';
-import type { AdminOrder, OrderStatus } from '@/types/admin/orders';
-import type { PaginatedResponse } from '@/types/common';
+import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
+import { useAdminOrdersQuery } from '@/hooks/admin/useAdminOrdersQuery';
 
 const PAGE_SIZE = 10;
 
-type TabStatus = 'all' | 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-
-function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  const config: Record<string, { label: string; className: string }> = {
-    completed: {
-      label: 'Completed',
-      className: 'bg-success/20 text-success hover:bg-success/30 border-none font-medium',
-    },
-    pending: {
-      label: 'Pending',
-      className: 'bg-warning/20 text-warning hover:bg-warning/30 border-none font-medium',
-    },
-    processing: {
-      label: 'Processing',
-      className: 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-none font-medium',
-    },
-    failed: {
-      label: 'Failed',
-      className:
-        'bg-destructive/20 text-destructive hover:bg-destructive/30 border-none font-medium',
-    },
-    cancelled: {
-      label: 'Cancelled',
-      className: 'bg-muted/60 text-muted-foreground hover:bg-muted border-none font-medium',
-    },
-  };
-  const cfg = config[status] ?? {
-    label: status,
-    className: 'bg-muted/60 text-muted-foreground border-none font-medium',
-  };
-  return <Badge className={cfg.className}>{cfg.label}</Badge>;
-}
+type TabStatus = 'all' | 'pending' | 'paid' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 function TableRowSkeleton() {
   return (
@@ -85,65 +53,66 @@ function TableRowSkeleton() {
 }
 
 export default function AdminOrdersPage() {
-  const [activeTab, setActiveTab] = useState<TabStatus>('all');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [pagination, setPagination] = useState({ count: 0, total_pages: 1, current_page: 1 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router       = useRouter();
+  const pathname     = usePathname();
+
+  const activeTab = (searchParams.get('status') ?? 'all') as TabStatus;
+  const search    = searchParams.get('search') ?? '';
+  const page      = Number(searchParams.get('page') ?? '1');
+
+  const [searchInput, setSearchInput] = useState(search);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-  // Debounce search
+  const updateParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v === null || v === '') params.delete(k);
+      else params.set(k, v);
+    });
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, pathname, router]);
+
+  // Keep a stable ref so the debounce effect doesn't re-run every time
+  // updateParams gets a new reference (which would create an infinite loop).
+  const updateParamsRef = useRef(updateParams);
+  useEffect(() => { updateParamsRef.current = updateParams; }, [updateParams]);
+
+  // Sync the controlled input when the URL changes externally (Back/Forward nav).
+  useEffect(() => { setSearchInput(search); }, [search]);
+
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search), 400);
+    const id = setTimeout(() => {
+      // Only push if the URL value actually differs to avoid no-op history pushes.
+      if ((searchInput || null) !== (search || null)) {
+        updateParamsRef.current({ search: searchInput || null, page: null });
+      }
+    }, 400);
     return () => clearTimeout(id);
-  }, [search]);
+  }, [searchInput, search]);
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params: Record<string, unknown> = {
-        page,
-        page_size: PAGE_SIZE,
-      };
-      if (activeTab !== 'all') params.status = activeTab;
-      if (debouncedSearch) params.search = debouncedSearch;
+  const { data, isPending, isError } = useAdminOrdersQuery({
+    status:    activeTab === 'all' ? undefined : activeTab,
+    search:    search || undefined,
+    page,
+    page_size: PAGE_SIZE,
+  });
 
-      const data = (await orderService.adminOrdersList(
-        params as Parameters<typeof orderService.adminOrdersList>[0]
-      )) as PaginatedResponse<AdminOrder>;
-      setOrders(data?.results ?? []);
-      setPagination({
-        count: data?.count ?? 0,
-        total_pages: data?.total_pages ?? 1,
-        current_page: data?.current_page ?? 1,
-      });
-    } catch {
-      setError('Failed to load orders. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, debouncedSearch, page]);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
-
-  // Reset page on filter/search change
-  useEffect(() => {
-    setPage(1);
-  }, [activeTab, debouncedSearch]);
+  const orders     = data?.results ?? [];
+  const pagination = {
+    count:        data?.count        ?? 0,
+    total_pages:  data?.total_pages  ?? 1,
+    current_page: data?.current_page ?? 1,
+  };
 
   const tabs: { value: TabStatus; label: string }[] = [
-    { value: 'all', label: 'All Orders' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'processing', label: 'Processing' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'all',        label: 'All Orders'  },
+    { value: 'pending',    label: 'Pending'     },
+    { value: 'paid',       label: 'Paid'        },
+    { value: 'processing', label: 'Processing'  },
+    { value: 'completed',  label: 'Completed'   },
+    { value: 'failed',     label: 'Failed'      },
+    { value: 'cancelled',  label: 'Cancelled'   },
   ];
 
   const triggerCls =
@@ -165,8 +134,8 @@ export default function AdminOrdersPage() {
               <Input
                 id="orders-search"
                 placeholder="Search by order # or user…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-9 bg-background border-border h-9 text-sm"
               />
             </div>
@@ -175,7 +144,7 @@ export default function AdminOrdersPage() {
         <CardContent>
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as TabStatus)}
+            onValueChange={(v) => updateParams({ status: v === 'all' ? null : v, page: null })}
             className="w-full">
             <TabsList className="bg-muted p-1 mb-6 inline-flex w-auto border border-border flex-wrap h-auto gap-1">
               {tabs.map((t) => (
@@ -187,11 +156,13 @@ export default function AdminOrdersPage() {
 
             {tabs.map((t) => (
               <TabsContent
-                key={t.value}
-                value={t.value}
-                className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                {error ? (
-                  <div className="text-center py-12 text-destructive text-sm">{error}</div>
+                 key={t.value}
+                 value={t.value}
+                 className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                {isError ? (
+                  <div className="text-center py-12 text-destructive text-sm">
+                    Failed to load orders. Please try again.
+                  </div>
                 ) : (
                   <>
                     <div className="overflow-x-auto">
@@ -222,7 +193,7 @@ export default function AdminOrdersPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {loading ? (
+                          {isPending ? (
                             Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={i} />)
                           ) : orders.length === 0 ? (
                             <TableRow>
@@ -239,7 +210,7 @@ export default function AdminOrdersPage() {
                                   #{order.order_number}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground text-sm">
-                                  {order.user}
+                                  {order.user || <span className="text-muted-foreground italic">Unknown</span>}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground text-sm">
                                   {new Date(order.created_at).toLocaleDateString()}
@@ -281,16 +252,16 @@ export default function AdminOrdersPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={page <= 1 || loading}
+                            onClick={() => updateParams({ page: String(Math.max(1, page - 1)) })}
+                            disabled={page <= 1 || isPending}
                             className="border-border h-8">
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setPage((p) => Math.min(pagination.total_pages, p + 1))}
-                            disabled={page >= pagination.total_pages || loading}
+                            onClick={() => updateParams({ page: String(Math.min(pagination.total_pages, page + 1)) })}
+                            disabled={page >= pagination.total_pages || isPending}
                             className="border-border h-8">
                             <ChevronRight className="h-4 w-4" />
                           </Button>

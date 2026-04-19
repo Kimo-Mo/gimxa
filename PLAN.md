@@ -44,16 +44,42 @@ Each phase represents an isolated module. Execute the strict Spec Kit lifecycle 
 - **Objective:** Full lifecycle management of customer orders.
 - **Key Features:**
   - Data table with server-side pagination, filtering (status: pending, completed, cancelled), and sorting.
-  - View detailed order breakdown (products, top-up IDs, customer info) in a Drawer/Modal.
+  - View detailed order breakdown (products, top-up IDs, customer info) in a Modal.
   - Admin actions: Manually approve, reject, or refund orders with confirmation dialogs.
+  - update single order with this payload
+    {
+    "status":"processing",  // pending, paid, failed, completed, processing, cancelled
+    "send_notification": true, // (optional) default = false
+    "notification_data": { // required if send_notification = true
+        "subject":"Your order is processing",
+        "message":"Your order is processing now, if order status is changed we will message you",
+        "email_type": "default"
+      }
+    }
+  - response of getOrdersList() is : 
+    {
+    "data": 200,
+    "message": "Orders fetched successfully",
+    "status": {
+        "count": 0,
+        "total_pages": 0,
+        "current_page": 1,
+        "page_size": 10,
+        "next": null,
+        "previous": null,
+        "results": []
+      }
+    }
 - **Data Hooks:** `orders.service.ts` endpoints.
 
 ### Phase 4: User Management
 - **Objective:** Control user accounts and system roles.
 - **Key Features:**
   - List all registered users with search functionality (by email/name).
-  - Profile view for users (order history, wallet balance).
-  - Admin actions: Ban/Unban users, reset passwords manually, assign admin privileges.
+  - Profile view for users (order history).
+  - Admin actions: delete users, reset passwords manually, assign admin privileges.
+  - you can filter with : ["role", "is_active", "provider", "is_verified"]
+  - you can search with : ["username","email","full_name","id"]
 - **Data Hooks:** `user.service.ts` endpoints.
 
 ### Phase 5: Coupon Management

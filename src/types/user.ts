@@ -47,8 +47,9 @@ export interface AdminUpdateUserPayload extends UpdateProfilePayload {
 }
 
 export interface UserListParams {
-  search?: string;
+  search?: string; // you can search with (full_name or username or email)
   role?: string;
+  filter?: string; // you can filter with ["role", "is_active", "provider", "is_verified"]
   page?: number;
   page_size?: number;
 }
