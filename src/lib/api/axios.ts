@@ -144,7 +144,11 @@ api.interceptors.response.use(
       'data' in response.data &&
       'status' in response.data
     ) {
-      response.data = response.data.data;
+      if (typeof response.data.data === 'number' && typeof response.data.status !== 'number') {
+        response.data = response.data.status;
+      } else {
+        response.data = response.data.data;
+      }
     }
     return response;
   },

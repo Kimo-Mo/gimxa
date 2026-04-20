@@ -3,9 +3,11 @@ import {
   CouponValidatePayload,
   CouponApplyPayload,
   CouponRemovePayload,
+} from '@/types';
+import {
   AdminCouponPayload,
   AdminAddResourceToCouponPayload,
-} from '@/types';
+} from '@/types/admin/coupons';
 
 export const couponService = {
   // Public
@@ -78,6 +80,10 @@ export const couponService = {
   },
   adminCouponUsages: async (id: string | number) => {
     const { data } = await api.get(`/coupons/admin/coupon/${id}/usages/`);
+    return data;
+  },
+  adminDeleteCoupon: async (id: string | number) => {
+    const { data } = await api.delete(`/coupons/admin/coupon/${id}/`);
     return data;
   },
 };
