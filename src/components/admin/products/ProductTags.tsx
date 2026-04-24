@@ -109,20 +109,18 @@ export function ProductTags({
             </div>
           )}
           {tags.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              No tags yet. Type above to create one.
-            </p>
+            <p className="text-xs text-muted-foreground">No tags yet. Type above to create one.</p>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={!!tagToDelete} onOpenChange={(open) => !open && setTagToDelete(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Delete Tag</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the tag &quot;{tagToDelete?.name}&quot;? This action will remove
-              it globally from all products.
+              Are you sure you want to delete the tag &quot;{tagToDelete?.name}&quot;? This action
+              will remove it globally from all products.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex justify-end gap-2 mt-4">

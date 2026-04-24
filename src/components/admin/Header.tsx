@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
@@ -56,11 +56,6 @@ export function Header() {
 
         <div className="flex items-center flex-1 justify-end gap-2 sm:gap-4">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="text-foreground relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full"></span>
-            <span className="sr-only">Notifications</span>
-          </Button>
           {isAuthenticated && user && (
             <UserDropdown user={user} isAdmin={isAdmin} onLogout={handleLogout} />
           )}

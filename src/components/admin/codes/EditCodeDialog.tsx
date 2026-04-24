@@ -30,7 +30,7 @@ export function EditCodeDialog({
 }: EditCodeDialogProps) {
   return (
     <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
-      <DialogContent className="bg-card border-border">
+      <DialogContent aria-describedby={undefined} className="bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground">Edit Code</DialogTitle>
           <DialogDescription className="text-muted-foreground">

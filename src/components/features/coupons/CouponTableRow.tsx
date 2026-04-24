@@ -39,6 +39,7 @@ export default function CouponTableRow({
       <TableCell>
         <CouponStatusBadge coupon={coupon} />
       </TableCell>
+      <TableCell className="text-center">{coupon.used_count}</TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
           <Button

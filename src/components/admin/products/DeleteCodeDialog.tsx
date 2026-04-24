@@ -25,7 +25,7 @@ export function DeleteCodeDialog({
 }: DeleteCodeDialogProps) {
   return (
     <Dialog open={code !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Delete Code</DialogTitle>
           <DialogDescription>
@@ -43,12 +43,7 @@ export function DeleteCodeDialog({
           <Button variant="outline" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isPending}
-            className="gap-2"
-          >
+          <Button variant="destructive" onClick={onConfirm} disabled={isPending} className="gap-2">
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Delete
           </Button>

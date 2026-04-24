@@ -9,18 +9,24 @@ interface TopupGalleryProps {
 }
 
 export const TopupGallery = ({ main_image, name }: TopupGalleryProps) => {
-  const image = (main_image && main_image?.image) || '/placeholder-product.png';
+  const image = main_image && main_image?.image;
   return (
     <div className="flex flex-col w-full">
       <div className="relative group aspect-16/12 lg:aspect-3/4 w-full rounded-2xl overflow-hidden bg-transparent">
-        <Image
-          src={getImageUrl(image)}
-          alt={name}
-          fill
-          className=" object-contain transition-transform duration-500 group-hover:scale-105"
-          priority
-          unoptimized
-        />
+        {image ? (
+          <Image
+            src={getImageUrl(image)}
+            alt={name}
+            fill
+            className=" object-contain transition-transform duration-500 group-hover:scale-105"
+            priority
+            unoptimized
+          />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full">
+            <p className="text-muted-foreground">No image available</p>
+          </div>
+        )}
       </div>
     </div>
   );

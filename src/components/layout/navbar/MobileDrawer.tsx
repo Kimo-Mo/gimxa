@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { User, LogOut, X } from 'lucide-react';
 import { Button, Sheet, SheetContent, SheetClose, SheetTitle } from '@/components/ui';
 import { NAV_LINKS } from './navLinks';
@@ -21,6 +21,7 @@ export function MobileDrawer({
   onLogout,
 }: MobileDrawerProps) {
   const pathname = usePathname();
+  const params = useSearchParams();
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -47,18 +48,19 @@ export function MobileDrawer({
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {NAV_LINKS.map(({ href, label, icon, description }) => {
             const isActive = pathname === href;
+            const isCategoryActive = href.includes('category') && params.get('category') === href.split('category=')[1];
             return (
               <SheetClose asChild key={href}>
                 <Link
                   href={href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
-                    isActive
+                    isActive || isCategoryActive
                       ? 'bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary'
                       : 'hover:bg-muted text-foreground/80 hover:text-foreground'
                   }`}>
                   <div
                     className={`size-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                      isActive
+                      isActive || isCategoryActive
                         ? 'bg-primary/15 text-primary'
                         : 'bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
                     }`}>
@@ -68,7 +70,7 @@ export function MobileDrawer({
                     <p className="text-sm font-medium leading-tight">{label}</p>
                     <p className="text-xs text-muted-foreground truncate">{description}</p>
                   </div>
-                  {isActive && <div className="size-1.5 rounded-full bg-primary shrink-0" />}
+                  {(isActive || isCategoryActive) && <div className="size-1.5 rounded-full bg-primary shrink-0" />}
                 </Link>
               </SheetClose>
             );

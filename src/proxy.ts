@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // ─── Route Definitions ────────────────────────────────────────────────────────
 
 /** Requires any authenticated user */
-const PROTECTED_ROUTES = ['/profile', '/orders', '/payments'];
+const PROTECTED_ROUTES = ['/profile', '/orders', '/payments', '/checkout'];
 
 /** Requires admin or developer role */
 const ADMIN_ROUTES = ['/dashboard'];

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui';
 import { UserInitials } from './UserInitials';
 import type { AuthUser } from '@/types';
+import { usePathname } from 'next/navigation';
 
 interface UserDropdownProps {
   user: AuthUser;
@@ -20,18 +21,19 @@ interface UserDropdownProps {
 
 export function UserDropdown({ user, isAdmin, onLogout }: UserDropdownProps) {
   const displayName = user.full_name || user.username || 'Account';
+  const pathname = usePathname();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="group flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-white/8 transition-all duration-200 outline-none cursor-pointer">
           <UserInitials name={displayName} size="sm" />
-          <span className="hidden lg:block text-sm font-medium max-w-32 truncate text-white/90 group-hover:text-white transition-colors">
+          <span className={`hidden lg:block text-sm font-medium max-w-32 truncate transition-colors ${pathname.includes('/dashboard') ? 'text-foreground group-hover:text-primary' : 'text-white/90 group-hover:text-white'}`}>
             {displayName}
           </span>
           <ChevronDown
             size={14}
-            className="hidden lg:block text-white/50 group-hover:text-white/80 transition-all duration-200 group-data-[state=open]:rotate-180"
+            className={`hidden lg:block transition-all duration-200 group-data-[state=open]:rotate-180 ${pathname.includes('/dashboard') ? 'text-foreground group-hover:text-primary' : 'text-white/50 group-hover:text-white/80'}`}
           />
         </button>
       </DropdownMenuTrigger>

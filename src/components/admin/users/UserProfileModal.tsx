@@ -30,8 +30,14 @@ export function UserProfileModal({ user, onClose, currentAdminId }: UserProfileM
   const fmtDT = (d: string) => new Date(d).toLocaleString();
 
   return (
-    <Dialog open={!!user} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={!!user}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}>
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-w-2xl max-h-[90vh] overflow-y-auto">
         {user && (
           <>
             <DialogHeader>
@@ -40,9 +46,7 @@ export function UserProfileModal({ user, onClose, currentAdminId }: UserProfileM
                   <DialogTitle className="text-xl truncate">
                     {user.full_name ?? user.username}
                   </DialogTitle>
-                  <DialogDescription className="truncate">
-                    {user.email}
-                  </DialogDescription>
+                  <DialogDescription className="truncate">{user.email}</DialogDescription>
                 </div>
                 <UserRoleBadge role={user.role} />
               </div>
@@ -51,51 +55,79 @@ export function UserProfileModal({ user, onClose, currentAdminId }: UserProfileM
             {/* Account Details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 py-4">
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Username</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Username
+                </span>
                 <span className="text-sm font-medium">{user.username}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Full Name</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Full Name
+                </span>
                 <span className="text-sm font-medium">{user.full_name ?? '—'}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Email</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Email
+                </span>
                 <span className="text-sm font-medium break-all">{user.email}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Role</span>
-                <span><UserRoleBadge role={user.role} /></span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Role
+                </span>
                 <span>
-                  {user.is_active
-                    ? <Badge variant="default">Active</Badge>
-                    : <Badge variant="outline">Inactive</Badge>}
+                  <UserRoleBadge role={user.role} />
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Provider</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Status
+                </span>
+                <span>
+                  {user.is_active ? (
+                    <Badge variant="default">Active</Badge>
+                  ) : (
+                    <Badge variant="outline">Inactive</Badge>
+                  )}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Provider
+                </span>
                 <span className="text-sm font-medium capitalize">{user.provider || '—'}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Verified</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Verified
+                </span>
                 <span className="text-sm font-medium">{user.is_verified ? 'Yes' : 'No'}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Staff</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Staff
+                </span>
                 <span className="text-sm font-medium">{user.is_staff ? 'Yes' : 'No'}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Joined</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Joined
+                </span>
                 <span className="text-sm font-medium">{fmt(user.date_joined)}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Last Login</span>
-                <span className="text-sm font-medium">{user.last_login ? fmtDT(user.last_login) : 'Never'}</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Last Login
+                </span>
+                <span className="text-sm font-medium">
+                  {user.last_login ? fmtDT(user.last_login) : 'Never'}
+                </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Last Updated</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  Last Updated
+                </span>
                 <span className="text-sm font-medium">{fmtDT(user.last_updated)}</span>
               </div>
             </div>
@@ -121,15 +153,20 @@ export function UserProfileModal({ user, onClose, currentAdminId }: UserProfileM
                   {orders.map((order) => (
                     <div
                       key={order.id}
-                      className="flex flex-wrap items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0 gap-2"
-                    >
+                      className="flex flex-wrap items-center justify-between border-b border-border pb-2 last:border-0 last:pb-0 gap-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-foreground">#{order.order_number}</span>
-                        <span className="text-sm text-muted-foreground">{fmt(order.created_at)}</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {order.order_number}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {fmt(order.created_at)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <OrderStatusBadge status={order.status} />
-                        <span className="text-sm font-medium">${parseFloat(order.total_price).toFixed(2)}</span>
+                        <span className="text-sm font-medium">
+                          {order.currency} {parseFloat(order.total_price).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                   ))}

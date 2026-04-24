@@ -89,9 +89,8 @@ export default function CouponCreateDialog({ open, onOpenChange }: CouponCreateD
       onOpenChange={(o) => {
         if (!o) reset();
         onOpenChange(o);
-      }}
-    >
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      }}>
+      <DialogContent aria-describedby={undefined} className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Coupon</DialogTitle>
           <DialogDescription>Add a new coupon to the system.</DialogDescription>
@@ -114,9 +113,10 @@ export default function CouponCreateDialog({ open, onOpenChange }: CouponCreateD
             <Label htmlFor="scope">Scope</Label>
             <Select
               value={scopeValue}
-              onValueChange={(val) => setValue('scope', val as 'global' | 'product' | 'package' | 'category')}
-              disabled={mutation.isPending}
-            >
+              onValueChange={(val) =>
+                setValue('scope', val as 'global' | 'product' | 'package' | 'category')
+              }
+              disabled={mutation.isPending}>
               <SelectTrigger>
                 <SelectValue placeholder="Select scope" />
               </SelectTrigger>
@@ -137,8 +137,7 @@ export default function CouponCreateDialog({ open, onOpenChange }: CouponCreateD
               <Select
                 value={discountTypeValue}
                 onValueChange={(val) => setValue('discount_type', val as 'percent' | 'fixed')}
-                disabled={mutation.isPending}
-              >
+                disabled={mutation.isPending}>
                 <SelectTrigger>
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
@@ -192,9 +191,7 @@ export default function CouponCreateDialog({ open, onOpenChange }: CouponCreateD
                 {...register('end_at')}
                 disabled={mutation.isPending}
               />
-              {errors.end_at && (
-                <p className="text-destructive text-xs">{errors.end_at.message}</p>
-              )}
+              {errors.end_at && <p className="text-destructive text-xs">{errors.end_at.message}</p>}
             </div>
           </div>
 
@@ -229,8 +226,7 @@ export default function CouponCreateDialog({ open, onOpenChange }: CouponCreateD
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={mutation.isPending}
-            >
+              disabled={mutation.isPending}>
               Cancel
             </Button>
             <Button type="submit" disabled={mutation.isPending}>

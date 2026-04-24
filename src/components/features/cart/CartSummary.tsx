@@ -160,24 +160,26 @@ export default function CartSummary() {
     setFeedback(null);
     try {
       const validateResponse = await couponService.validateCoupon({
-        code: couponCode.trim().toLowerCase(),
+        code: couponCode.trim(),
       });
       extractResponseData<ValidateCouponResponse>(
         validateResponse as ValidateCouponResponse | ApiResponse<ValidateCouponResponse>
       );
 
       const applyResponse = await couponService.applyCoupon({
-        code: couponCode.trim().toLowerCase(),
+        code: couponCode.trim(),
       });
       const appliedData = extractResponseData<ApplyCouponResponse>(
         applyResponse as ApplyCouponResponse | ApiResponse<ApplyCouponResponse>
       );
 
-      setAppliedCoupon(appliedData.coupon);
-      setSubtotal(toNumber(appliedData.subtotal));
-      setDiscount(toNumber(appliedData.discount));
-      setTotalAfterDiscount(toNumber(appliedData.total_after_discount));
-      setFeedback('Coupon applied successfully');
+      if (appliedData.coupon) {
+        setAppliedCoupon(appliedData.coupon);
+        setSubtotal(toNumber(appliedData.subtotal));
+        setDiscount(toNumber(appliedData.discount));
+        setTotalAfterDiscount(toNumber(appliedData.total_after_discount));
+        setFeedback('Coupon applied successfully');
+      }
     } catch {
       setError('Invalid coupon or not applicable to your cart');
     } finally {
@@ -261,7 +263,7 @@ export default function CartSummary() {
             className="uppercase"
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value.trim().toUpperCase())}
-            disabled={isCouponDisabled}
+            disabled={isCouponDisabled || appliedCoupon !== null}
           />
           {appliedCoupon ? (
             <Button

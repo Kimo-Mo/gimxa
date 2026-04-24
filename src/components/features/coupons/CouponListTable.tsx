@@ -45,6 +45,7 @@ export default function CouponListTable({
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Used</TableHead>
             <TableHead className="w-37.5">Actions</TableHead>
           </TableRow>
         </TableHeader>

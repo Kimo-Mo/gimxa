@@ -28,6 +28,12 @@ export const TopUpCard = ({ item }: { item: TopUp }) => {
           <h3 className="font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors capitalize">
             {item?.product.name}
           </h3>
+          <p className="text-sm text-muted-foreground">
+            start from:{' '}
+            <span className='text-primary font-bold'>
+              {item?.start_from} {item?.currency}
+            </span>
+          </p>
           <div className="mt-auto">
             <Button className="w-full cursor-pointer" variant="default">
               Top Up Now

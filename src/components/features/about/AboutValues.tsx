@@ -11,7 +11,7 @@ export const AboutValues = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {/* Card 1: Instant Delivery (Large) */}
-        <Card className="md:col-span-2 md:row-span-2 group relative overflow-hidden bg-card/40 backdrop-blur-sm border-border/50 p-8 flex flex-col justify-between hover:border-primary/50 transition-all duration-500">
+        <Card className="md:col-span-2 md:row-span-2 group relative overflow-hidden bg-card backdrop-blur-sm border-border/50 p-8 flex flex-col justify-between hover:border-primary/50 transition-all duration-500">
           <div className="size-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform duration-500">
             <Zap size={32} fill="currentColor" className="opacity-20" />
             <Zap size={32} className="absolute" />
@@ -30,7 +30,7 @@ export const AboutValues = () => {
         </Card>
 
         {/* Card 2: Secure Payments */}
-        <Card className="group bg-card/40 backdrop-blur-sm border-border/50 p-6 hover:border-primary/50 transition-all duration-300">
+        <Card className="group bg-card backdrop-blur-sm border-border/50 p-6 hover:border-primary/50 transition-all duration-300">
           <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:rotate-12 transition-transform">
             <ShieldCheck size={24} />
           </div>
@@ -41,7 +41,7 @@ export const AboutValues = () => {
         </Card>
 
         {/* Card 3: 24/7 Support */}
-        <Card className="group bg-card/40 backdrop-blur-sm border-border/50 p-6 hover:border-primary/50 transition-all duration-300">
+        <Card className="group bg-card backdrop-blur-sm border-border/50 p-6 hover:border-primary/50 transition-all duration-300">
           <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:-rotate-12 transition-transform">
             <Headphones size={24} />
           </div>
@@ -52,7 +52,7 @@ export const AboutValues = () => {
         </Card>
 
         {/* Card 4: Global Access */}
-        <Card className="group bg-card/40 backdrop-blur-sm border-border/50 p-6 hover:border-primary/50 transition-all duration-300 lg:col-span-1">
+        <Card className="group bg-card backdrop-blur-sm border-border/50 p-6 hover:border-primary/50 transition-all duration-300 lg:col-span-1">
           <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
             <Globe size={24} />
           </div>
@@ -68,7 +68,7 @@ export const AboutValues = () => {
             <Target size={32} />
           </div>
           <div>
-            <h3 className="text-xl font-bold mb-2">Our Mission</h3>
+            <h3 className="text-xl lg:text-center font-bold mb-2">Our Mission</h3>
             <p className="text-muted-foreground">
               To become the most trusted digital marketplace for gamers in the region, providing
               seamless access to the digital goods they love.

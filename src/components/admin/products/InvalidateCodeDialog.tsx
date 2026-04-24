@@ -29,11 +29,12 @@ export function InvalidateCodeDialog({
 
   return (
     <Dialog open={code !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Invalidate Code</DialogTitle>
           <DialogDescription>
-            This will permanently mark the code as used. You can optionally correct the code string before confirming.
+            This will permanently mark the code as used. You can optionally correct the code string
+            before confirming.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -52,8 +53,7 @@ export function InvalidateCodeDialog({
             variant="destructive"
             onClick={() => onConfirm(editedValue.trim())}
             disabled={isPending}
-            className="gap-2"
-          >
+            className="gap-2">
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Confirm
           </Button>

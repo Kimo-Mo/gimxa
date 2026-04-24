@@ -110,9 +110,10 @@ export default function AdminNotificationsPage() {
     setSending(true);
     try {
       await notificationService.adminSendNotification({
-        title: form.title,
+        subject: form.title,
         message: form.message,
-        ...(form.user_id.trim() ? { user_id: form.user_id.trim() } : {}),
+        email_type: 'default',
+        ...(form.user_id.trim() ? { user: form.user_id.trim() } : {}),
       });
       toast.success(form.user_id ? 'Notification sent to user.' : 'Broadcast sent to all users.');
       setFormOpen(false);
@@ -177,7 +178,7 @@ export default function AdminNotificationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground font-medium">Title</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Subject</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Message</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Recipient</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Sent At</TableHead>
@@ -202,13 +203,13 @@ export default function AdminNotificationsPage() {
                       notifications.map((n) => (
                         <TableRow key={n.id} className="border-border hover:bg-muted/50">
                           <TableCell className="font-medium text-foreground text-sm max-w-40 truncate">
-                            {n.title}
+                            {n.subject}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm max-w-60 truncate">
                             {n.message}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
-                            {n.user ?? (
+                            {n.user?.full_name || n.user?.email || n.user?.username || (
                               <span className="text-primary text-xs font-medium">All users</span>
                             )}
                           </TableCell>
@@ -263,7 +264,7 @@ export default function AdminNotificationsPage() {
 
       {/* Send Notification Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="bg-card border-border sm:max-w-lg">
+        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-foreground">Send Notification</DialogTitle>
             <DialogDescription className="text-muted-foreground">

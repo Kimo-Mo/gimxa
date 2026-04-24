@@ -1,10 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { orderService } from '@/services/order.service';
+import { paymentService } from '@/services/payment.service';
+import type { InitPaymentPayload } from '@/services/payment.service';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { getErrorMessage, type OrderDetails } from './types';
+
+interface InitPaymentResponse {
+  checkout_url?: string;
+}
 
 interface OrderDetailsModalProps {
   orderNumber: string | null;
@@ -18,16 +26,48 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
     enabled: Boolean(orderNumber),
   });
 
+  const [isInitiatingPayment, setIsInitiatingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
   const details = detailsQuery.data;
+  const isPendingOrder = details?.status === 'pending';
+
+  const handlePayNow = async () => {
+    if (!details) return;
+    setIsInitiatingPayment(true);
+    setPaymentError(null);
+
+    const payload: InitPaymentPayload = {
+      order_id: details.order_number,
+      gateway_code: 'stripe',
+    };
+
+    try {
+      const response = (await paymentService.initPayment(payload)) as InitPaymentResponse;
+      if (response.checkout_url) {
+        window.location.href = response.checkout_url;
+      } else {
+        setPaymentError('No checkout URL returned. Please contact support.');
+      }
+    } catch {
+      setPaymentError('Failed to initiate payment. Please try again.');
+    } finally {
+      setIsInitiatingPayment(false);
+    }
+  };
 
   return (
     <Dialog open={Boolean(orderNumber)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Order Details</DialogTitle>
         </DialogHeader>
 
-        {detailsQuery.isLoading && <p className="text-sm text-muted-foreground">Loading details...</p>}
+        {detailsQuery.isLoading && (
+          <p className="text-sm text-muted-foreground">Loading details...</p>
+        )}
         {detailsQuery.isError && (
           <p className="text-sm text-destructive">
             {getErrorMessage(detailsQuery.error, 'Failed to load order details')}
@@ -41,8 +81,7 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
           <div className="space-y-4">
             <div className="flex flex-col gap-2 rounded-lg border border-border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold">{details.order_number}</p>
-                <p className="text-xs text-muted-foreground">ID: {details.id}</p>
+                <p className="text-sm font-semibold">Order ID: {details.order_number}</p>
                 <p className="text-xs text-muted-foreground">
                   Created: {new Date(details.created_at).toLocaleString()}
                 </p>
@@ -53,15 +92,21 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
             <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               <div className="rounded-lg border border-border/60 bg-background/50 p-3">
                 <p className="mb-1 text-xs text-muted-foreground">Subtotal</p>
-                <p>{details.subtotal}</p>
+                <p>
+                  {details.currency} {details.subtotal}
+                </p>
               </div>
               <div className="rounded-lg border border-border/60 bg-background/50 p-3">
                 <p className="mb-1 text-xs text-muted-foreground">Tax</p>
-                <p>{details.tax}</p>
+                <p>
+                  {details.currency} {details.tax}
+                </p>
               </div>
               <div className="rounded-lg border border-border/60 bg-background/50 p-3">
                 <p className="mb-1 text-xs text-muted-foreground">Discount Total</p>
-                <p>{details.discount_total}</p>
+                <p>
+                  {details.currency} {details.discount_total}
+                </p>
               </div>
               <div className="rounded-lg border border-border/60 bg-background/50 p-3">
                 <p className="mb-1 text-xs text-muted-foreground">Coupon Code</p>
@@ -69,7 +114,9 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
               </div>
               <div className="rounded-lg border border-border/60 bg-background/50 p-3 sm:col-span-2">
                 <p className="mb-1 text-xs text-muted-foreground">Total Price</p>
-                <p className="font-semibold text-primary">{details.total_price}</p>
+                <p className="font-semibold text-primary">
+                  {details.currency} {details.total_price}
+                </p>
               </div>
             </div>
 
@@ -98,30 +145,45 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
                     <p className="text-xs text-muted-foreground">Item ID: {item.id}</p>
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                    <p>Product Slug: {item.product_slug}</p>
                     <p>Quantity: {item.quantity}</p>
                     <p>Price: {item.price}</p>
-                    <p>Is Top-up: {item.is_topup ? 'Yes' : 'No'}</p>
-                    <p>Top-up Package: {item.topup_package ?? 'N/A'}</p>
-                    <p>Created At: {new Date(item.created_at).toLocaleString()}</p>
+                    {item.is_topup && <p>Top-up Package: {item.topup_package ?? 'N/A'}</p>}
                   </div>
-                  <div className="mt-3">
-                    <p className="text-xs text-muted-foreground">Top-up Data</p>
-                    {item.topup_data ? (
-                      <div className="mt-1 space-y-1 text-xs sm:text-sm">
-                        {Object.entries(item.topup_data).map(([key, value]) => (
-                          <p key={key}>
-                            {key}: {value}
-                          </p>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No top-up data</p>
-                    )}
-                  </div>
+                  {item.is_topup && (
+                    <div className="mt-3">
+                      <p className="text-xs text-muted-foreground">Top-up Data</p>
+                      {item.topup_data ? (
+                        <div className="mt-1 space-y-1 text-xs sm:text-sm">
+                          {Object.entries(item.topup_data).map(([key, value]) => (
+                            <p key={key}>
+                              {key}: {value}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No top-up data</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {isPendingOrder && (
+              <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-background/50 p-4">
+                <p className="text-sm font-semibold">Complete Payment</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  This order is awaiting payment. Click below to pay via Stripe.
+                </p>
+                <Button
+                  onClick={handlePayNow}
+                  disabled={isInitiatingPayment}
+                  className="w-full sm:w-auto">
+                  {isInitiatingPayment ? 'Redirecting…' : 'Pay Now with Stripe'}
+                </Button>
+                {paymentError && <p className="text-xs text-destructive mt-1">{paymentError}</p>}
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

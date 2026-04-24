@@ -1,8 +1,8 @@
 import { BannerCard } from '@/components/features/home/digitalProducts/BannerCard';
-import { TopupFitlerTypes } from './TopUps';
+import { TopupFilterTypes } from './TopUps';
 
 interface CategoryBannersProps {
-  onSelectCategory: (category: TopupFitlerTypes) => void;
+  onSelectCategory: (category: TopupFilterTypes) => void;
 }
 
 export const CategoryBanners = ({ onSelectCategory }: CategoryBannersProps) => {

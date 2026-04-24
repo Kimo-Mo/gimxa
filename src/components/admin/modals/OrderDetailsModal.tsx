@@ -28,15 +28,13 @@ export function OrderDetailsModal({ isOpen, onClose, orderId }: OrderDetailsModa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl bg-card text-card-foreground border-border max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        aria-describedby={undefined}
+        className="sm:max-w-2xl bg-card text-card-foreground border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Order Details</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            {order
-              ? `#${order.order_number}`
-              : isPending
-                ? `Loading order ${orderId}…`
-                : 'Order details'}
+            {order ? order.order_number : isPending ? `Loading order ${orderId}…` : 'Order details'}
           </DialogDescription>
         </DialogHeader>
 

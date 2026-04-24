@@ -16,10 +16,16 @@ export interface AdminOrder {
   total_price: string;
   subtotal: string;
   tax: string;
+  currency: string;
   discount_total: string;
   coupon_code: string | null;
   created_at: string;
-  user: string; // user id or username depending on context
+  user: {
+    id: number;
+    full_name: string;
+    email: string;
+    username: string;
+  };
   items_count: number;
   payment_details: OrderPaymentDetails | null;
 }
@@ -30,6 +36,7 @@ export interface AdminOrderItem {
   product_slug: string;
   quantity: number;
   price: string;
+  currency: string;
   is_topup: boolean;
   topup_package: number | null;
   topup_data: Record<string, string> | null;
@@ -43,6 +50,7 @@ export interface AdminOrderDetail {
   status: OrderStatus;
   subtotal: string;
   tax: string;
+  currency: string;
   coupon_code: string | null;
   discount_total: string;
   total_price: string;
@@ -52,7 +60,7 @@ export interface AdminOrderDetail {
 }
 
 export interface AdminOrderListParams {
-  status?: string;
+  filter?: string;
   page?: number;
   page_size?: number;
   search?: string;

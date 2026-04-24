@@ -18,8 +18,14 @@ export interface OrderListItem {
   status: OrderStatus;
   total_price: string;
   created_at: string;
-  user: string;
+  user: {
+    id: number;
+    full_name: string;
+    email: string;
+    username: string;
+  };
   tax: string;
+  currency: string;
   discount_total: string;
   subtotal: string;
   coupon_code: string | null;
@@ -45,6 +51,7 @@ export interface OrderDetails {
   status: OrderStatus;
   subtotal: string;
   tax: string;
+  currency: string;
   coupon_code: string | null;
   discount_total: string;
   total_price: string;

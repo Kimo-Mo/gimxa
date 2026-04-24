@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -14,14 +13,13 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CreditCard, Users, ArrowRight, Package, Home } from 'lucide-react';
-import { orderService } from '@/services/order.service';
-import { userService } from '@/services/user.service';
-import { catalogService } from '@/services/catalog.service';
-import type { AdminOrder } from '@/types/admin/orders';
-import type { PaginatedResponse } from '@/types/common';
+import { CreditCard, Users, ArrowRight, Package, Home, Zap } from 'lucide-react';
 
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
+import { useAdminOrdersQuery } from '@/hooks/admin/useAdminOrdersQuery';
+import { useProductsQuery } from '@/hooks/admin/useProductsQuery';
+import { useAdminUsersQuery } from '@/hooks/admin/useAdminUsersQuery';
+import { useTopupsQuery } from '@/hooks/admin/useTopupsQuery';
 
 // ─── Stat card skeleton ──────────────────────────────────────────────────
 function StatCardSkeleton() {
@@ -40,45 +38,32 @@ function StatCardSkeleton() {
 }
 
 export default function AdminDashboardPage() {
-  const [recentOrders, setRecentOrders] = useState<AdminOrder[]>([]);
-  const [totalOrders, setTotalOrders] = useState<number | null>(null);
-  const [totalUsers, setTotalUsers] = useState<number | null>(null);
-  const [totalProducts, setTotalProducts] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: ordersData,
+    isPending: LoadingOrders,
+    isError,
+  } = useAdminOrdersQuery({
+    page: 1,
+    page_size: 5,
+  });
+  const recentOrders = ordersData?.results ?? [];
+  const totalOrders = ordersData?.count ?? null;
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const [ordersRes, usersRes, productsRes] = await Promise.allSettled([
-          orderService.adminOrdersList({ page_size: 5, page: 1 }) as Promise<
-            PaginatedResponse<AdminOrder>
-          >,
-          userService.adminUsersList({ page_size: 1, page: 1 }),
-          catalogService.adminProductsList({ page_size: 1, page: 1 }),
-        ]);
+  const { data: productsData, isPending: LoadingProducts } = useProductsQuery({
+    page: 1,
+    search: '',
+    categoryId: 'all',
+  });
+  const totalProducts = productsData?.count ?? null;
 
-        if (ordersRes.status === 'fulfilled') {
-          const data = ordersRes.value as PaginatedResponse<AdminOrder>;
-          setRecentOrders(data?.results ?? []);
-          setTotalOrders(data?.count ?? null);
-        }
-        if (usersRes.status === 'fulfilled') {
-          setTotalUsers(usersRes.value?.count ?? null);
-        }
-        if (productsRes.status === 'fulfilled') {
-          setTotalProducts(productsRes.value?.count ?? null);
-        }
-      } catch {
-        setError('Failed to load dashboard data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchDashboardData();
-  }, []);
+  const { data: topupsData, isPending: LoadingTopUps } = useTopupsQuery({
+    page: 1,
+    search: '',
+  });
+  const totalTopUps = topupsData?.count ?? null;
+
+  const { data: usersData, isPending: LoadingUsers } = useAdminUsersQuery({ page: 1, search: '' });
+  const totalUsers = usersData?.count ?? null;
 
   const stats = [
     {
@@ -99,21 +84,28 @@ export default function AdminDashboardPage() {
       title: 'Total Products',
       value: totalProducts,
       icon: Package,
-      sub: 'In catalog',
+      sub: 'All time products',
       href: '/dashboard/products',
+    },
+    {
+      title: 'Total Top-Ups',
+      value: totalTopUps,
+      icon: Zap,
+      sub: 'All time top-ups',
+      href: '/dashboard/topups',
     },
   ];
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap space-y-2">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-1">
-          Welcome back. Here is what&apos;s happening today.
-        </p>
-      </div>
-        <Link href={'/'} >
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard Overview</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back. Here is what&apos;s happening today.
+          </p>
+        </div>
+        <Link href={'/'}>
           <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
             <Home className="mr-2 h-4 w-4" /> Go to Store
           </Button>
@@ -121,9 +113,9 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => <StatCardSkeleton key={i} />)
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {LoadingOrders || LoadingProducts || LoadingUsers || LoadingTopUps
+          ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
           : stats.map((stat) => (
               <Card key={stat.title} className="bg-card border-border shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -160,8 +152,8 @@ export default function AdminDashboardPage() {
           </Link>
         </CardHeader>
         <CardContent>
-          {error && <div className="text-center py-8 text-destructive text-sm">{error}</div>}
-          {loading ? (
+          {isError && <div className="text-center py-8 text-destructive text-sm">{isError}</div>}
+          {LoadingOrders ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4">
@@ -172,7 +164,7 @@ export default function AdminDashboardPage() {
                 </div>
               ))}
             </div>
-          ) : !error && recentOrders.length === 0 ? (
+          ) : !isError && recentOrders.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">No orders yet.</div>
           ) : (
             <Table>
@@ -189,9 +181,11 @@ export default function AdminDashboardPage() {
                 {recentOrders.map((order) => (
                   <TableRow key={order.id} className="border-border hover:bg-muted/50">
                     <TableCell className="font-medium text-foreground tracking-tight text-sm">
-                      #{order.order_number}
+                      {order.order_number}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{order.user}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {order.user.full_name || order.user.email}
+                    </TableCell>
                     <TableCell>
                       <OrderStatusBadge status={order.status} />
                     </TableCell>
@@ -199,7 +193,8 @@ export default function AdminDashboardPage() {
                       {order.items_count}
                     </TableCell>
                     <TableCell className="text-right font-medium text-foreground text-sm">
-                      ${parseFloat(order.total_price).toFixed(2)}
+                      {order.currency}
+                      {parseFloat(order.total_price).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -31,29 +31,39 @@ import { useAdminUpdateOrderMutation } from '@/hooks/admin/useAdminOrderMutation
 import type { AdminOrderDetail, OrderStatus } from '@/types/admin/orders';
 
 const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
-  { value: 'pending',    label: 'Pending'    },
-  { value: 'paid',       label: 'Paid'       },
+  { value: 'pending', label: 'Pending' },
+  { value: 'paid', label: 'Paid' },
   { value: 'processing', label: 'Processing' },
-  { value: 'completed',  label: 'Completed'  },
-  { value: 'failed',     label: 'Failed'     },
-  { value: 'cancelled',  label: 'Cancelled'  },
+  { value: 'completed', label: 'Completed' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
-const notifySchema = z.object({
-  status: z.enum(['pending', 'paid', 'processing', 'completed', 'failed', 'cancelled']),
-  send_notification: z.boolean(),
-  subject: z.string().optional(),
-  message: z.string().optional(),
-}).superRefine((data, ctx) => {
-  if (data.send_notification) {
-    if (!data.subject?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['subject'], message: 'Subject is required when sending notification' });
+const notifySchema = z
+  .object({
+    status: z.enum(['pending', 'paid', 'processing', 'completed', 'failed', 'cancelled']),
+    send_notification: z.boolean(),
+    subject: z.string().optional(),
+    message: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.send_notification) {
+      if (!data.subject?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['subject'],
+          message: 'Subject is required when sending notification',
+        });
+      }
+      if (!data.message?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['message'],
+          message: 'Message is required when sending notification',
+        });
+      }
     }
-    if (!data.message?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['message'], message: 'Message is required when sending notification' });
-    }
-  }
-});
+  });
 
 type NotifyForm = z.infer<typeof notifySchema>;
 
@@ -86,7 +96,7 @@ export function OrderStatusUpdate({ order, onClose }: OrderStatusUpdateProps) {
   }, [order.order_number, order.status, form]);
 
   const sendNotification = form.watch('send_notification');
-  const selectedStatus   = form.watch('status');
+  const selectedStatus = form.watch('status');
 
   const handleConfirm = async () => {
     const isValid = await form.trigger();
@@ -101,10 +111,10 @@ export function OrderStatusUpdate({ order, onClose }: OrderStatusUpdateProps) {
         payload: {
           status: values.status,
           ...(values.send_notification && {
-            send_notification: true,
+            send_notification: values.send_notification,
             notification_data: {
-              subject:    values.subject ?? '',
-              message:    values.message ?? '',
+              subject: values.subject ?? '',
+              message: values.message ?? '',
               email_type: 'default',
             },
           }),
@@ -127,8 +137,7 @@ export function OrderStatusUpdate({ order, onClose }: OrderStatusUpdateProps) {
       <div className="flex gap-3 items-center flex-wrap">
         <Select
           value={selectedStatus}
-          onValueChange={(v) => form.setValue('status', v as OrderStatus)}
-        >
+          onValueChange={(v) => form.setValue('status', v as OrderStatus)}>
           <SelectTrigger id="order-status-select" className="w-48 bg-background border-border">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
@@ -151,10 +160,11 @@ export function OrderStatusUpdate({ order, onClose }: OrderStatusUpdateProps) {
                 e.preventDefault();
                 const isValid = await form.trigger();
                 if (isValid) setDialogOpen(true);
-              }}
-            >
+              }}>
               {updateMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating…</>
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating…
+                </>
               ) : (
                 'Update Status'
               )}
@@ -166,24 +176,22 @@ export function OrderStatusUpdate({ order, onClose }: OrderStatusUpdateProps) {
               <AlertDialogDescription className="text-muted-foreground">
                 Change order #{order.order_number} status to{' '}
                 <span className="font-semibold text-foreground capitalize">{selectedStatus}</span>?
-                {sendNotification && ' A notification email will be sent to the customer.'}
-                {' '}This action cannot be undone without another manual update.
+                {sendNotification && ' A notification email will be sent to the customer.'} This
+                action cannot be undone without another manual update.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel
-                className="border-border"
-                onClick={() => setDialogOpen(false)}
-              >
+              <AlertDialogCancel className="border-border" onClick={() => setDialogOpen(false)}>
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirm}
                 disabled={updateMutation.isPending}
-                className="bg-primary hover:bg-primary-hover text-primary-foreground"
-              >
+                className="bg-primary hover:bg-primary-hover text-primary-foreground">
                 {updateMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating…</>
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating…
+                  </>
                 ) : (
                   'Confirm Update'
                 )}
@@ -200,7 +208,9 @@ export function OrderStatusUpdate({ order, onClose }: OrderStatusUpdateProps) {
           checked={sendNotification}
           onCheckedChange={(v: boolean) => form.setValue('send_notification', v)}
         />
-        <Label htmlFor="send-notification-toggle" className="text-sm text-foreground cursor-pointer">
+        <Label
+          htmlFor="send-notification-toggle"
+          className="text-sm text-foreground cursor-pointer">
           Send email notification to customer
         </Label>
       </div>

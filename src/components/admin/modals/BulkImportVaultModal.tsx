@@ -17,7 +17,9 @@ export function BulkImportVaultModal() {
           <Upload className="mr-2 h-4 w-4" /> Bulk Import
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-106.25 bg-card text-card-foreground border-border">
+      <DialogContent
+        aria-describedby={undefined}
+        className="sm:max-w-106.25 bg-card text-card-foreground border-border">
         <DialogHeader>
           <DialogTitle>Bulk Import Vault Items</DialogTitle>
           <DialogDescription className="text-muted-foreground">

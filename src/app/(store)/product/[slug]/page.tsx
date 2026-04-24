@@ -21,6 +21,7 @@ export default function ProductDetailPage() {
   const { slug } = useParams();
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
+  const clearCart = useCartStore((state) => state.clearCart);
 
   const { data: product, isLoading,error } = useQuery({
     queryKey: ['product', slug],
@@ -33,9 +34,10 @@ export default function ProductDetailPage() {
     toast.success(`${product.name} added to cart!`);
   };
 
-  const onBuyNow = () => {
+  const onBuyNow = async () => {
     if (!product) return;
-    addItem(product, 1);
+    await clearCart();
+    await addItem(product, 1);
     router.push('/checkout');
   };
 

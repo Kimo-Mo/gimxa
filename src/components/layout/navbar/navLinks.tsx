@@ -11,7 +11,7 @@ export interface NavLink {
 export const NAV_LINKS: NavLink[] = [
   { href: '/', label: 'Home', icon: <Home size={18} />, description: 'Back to homepage' },
   {
-    href: '/store?type=key_based',
+    href: '/store',
     label: 'Games',
     icon: <Gamepad2 size={18} />,
     description: 'Browse game keys',
@@ -23,19 +23,19 @@ export const NAV_LINKS: NavLink[] = [
     description: 'Direct in-game top-ups',
   },
   {
-    href: '/store?type=gift_card',
+    href: '/store?category=gift-cards',
     label: 'Gift Cards',
     icon: <Gift size={18} />,
     description: 'Digital gift cards',
   },
   {
-    href: '/store?type=software',
+    href: '/store?category=software',
     label: 'Software',
     icon: <Sparkles size={18} />,
     description: 'Software keys',
   },
   {
-    href: '/store?type=subscription',
+    href: '/store?category=subscriptions',
     label: 'Subscriptions',
     icon: <Tag size={18} />,
     description: 'Subscriptions',

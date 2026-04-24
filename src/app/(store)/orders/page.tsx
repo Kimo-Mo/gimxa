@@ -36,7 +36,9 @@ export default function OrdersPage() {
     return orders.filter(
       (order) =>
         order.order_number.toLowerCase().includes(keyword) ||
-        order.user.toLowerCase().includes(keyword) ||
+        order.user.full_name.toLowerCase().includes(keyword) ||
+        order.user.email.toLowerCase().includes(keyword) ||
+        order.user.username.toLowerCase().includes(keyword) ||
         order.status.toString().toLowerCase().includes(keyword) ||
         (order.coupon_code ?? '').toLowerCase().includes(keyword) ||
         order.total_price.toLowerCase().includes(keyword) ||

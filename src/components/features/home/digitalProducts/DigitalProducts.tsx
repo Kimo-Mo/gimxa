@@ -6,9 +6,10 @@ import {
   PopularPcGames,
   ExploreByTags,
   PopularGiftCards,
-  ExploreByPlatform,
   PopularSubscriptions,
   PopularConsoleGames,
+  TrustSignals,
+  ExploreByRegion,
 } from './sections';
 
 export const DigitalProducts = () => {
@@ -39,12 +40,20 @@ export const DigitalProducts = () => {
           buttonText="console games"
           href="/store?category=console-games"
         />
-        <BannerCard image="/gift-cards.jpg" buttonText="GIFT CARDS" href="/store?category=gift-cards" />
+        <BannerCard
+          image="/gift-cards.jpg"
+          buttonText="GIFT CARDS"
+          href="/store?category=gift-cards"
+        />
         <BannerCard image="/software.jpg" buttonText="software" href="/store?category=software" />
       </div>
 
       {/* Popular Games Section */}
       <PopularPcGames />
+
+      {/* Trust Signals Section */}
+      <TrustSignals />
+
       <PopularConsoleGames />
 
       {/* Explore By Category Section */}
@@ -54,7 +63,7 @@ export const DigitalProducts = () => {
       <PopularGiftCards />
 
       {/* Explore By Platform Section */}
-      <ExploreByPlatform />
+      <ExploreByRegion />
 
       {/* Best Selling Subscriptions Section */}
       <PopularSubscriptions />

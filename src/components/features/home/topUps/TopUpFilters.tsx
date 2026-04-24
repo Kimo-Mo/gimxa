@@ -9,13 +9,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { TopupFitlerTypes } from './TopUps';
+import { TopupFilterTypes } from './TopUps';
 
 interface TopUpFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedCategory: TopupFitlerTypes;
-  setSelectedCategory: (category: TopupFitlerTypes) => void;
+  selectedCategory: TopupFilterTypes;
+  setSelectedCategory: (category: TopupFilterTypes) => void;
 }
 
 export const TopUpFilters = ({

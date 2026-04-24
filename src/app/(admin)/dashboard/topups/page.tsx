@@ -26,15 +26,21 @@ export default function AdminTopupsPage() {
   }, [search]);
 
   useEffect(() => {
-    setPage(1);
+    const timeoutId = setTimeout(() => {
+      setPage(1);
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [debouncedSearch, categoryId]);
 
   const topupsQuery = useTopupsQuery({ page, search: debouncedSearch });
   const deleteMutation = useDeleteTopupMutation();
   const categoriesQuery = useCategoriesQuery();
 
-  const categories = (categoriesQuery.data ?? []).filter(c => c.name.startsWith('Topup'));
-  const topups = (topupsQuery.data?.results ?? []).filter(t => categoryId === 'all' || t?.product?.categories?.some(c => String(c?.id) === categoryId));
+  const categories = (categoriesQuery.data ?? []).filter((c) => c.name.startsWith('Topup'));
+  const topups = (topupsQuery.data?.results ?? []).filter(
+    (t) => categoryId === 'all' || t?.product?.categories?.some((c) => String(c?.id) === categoryId)
+  );
   const loading = topupsQuery.isPending;
 
   const count = topups.length;
@@ -58,7 +64,7 @@ export default function AdminTopupsPage() {
           <TopupTable
             topups={topups}
             loading={loading}
-            error={topupsQuery.isError ? "Failed to load top-ups. Please try again." : null}
+            error={topupsQuery.isError ? 'Failed to load top-ups. Please try again.' : null}
             setDeleteSlug={setDeleteSlug}
           />
 

@@ -32,7 +32,7 @@ export function OrderDetailItems({ items }: OrderDetailItemsProps) {
               )}
             </div>
             <div className="font-semibold text-foreground ml-4 shrink-0">
-              ${parseFloat(item.price).toFixed(2)}
+              {item.currency} {parseFloat(item.price).toFixed(2)}
             </div>
           </div>
         ))}

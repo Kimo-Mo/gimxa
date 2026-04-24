@@ -21,6 +21,8 @@ export interface TopUp {
   id: number;
   packages: TopUpPackage[];
   product: TopUpProduct;
+  start_from: number;
+  currency: string;
 }
 
 export interface TopupsListParams {

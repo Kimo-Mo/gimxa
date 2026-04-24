@@ -11,7 +11,7 @@ import CouponListTable from '@/components/features/coupons/CouponListTable';
 import CouponCreateDialog from '@/components/features/coupons/CouponCreateDialog';
 import CouponDeleteDialog from '@/components/features/coupons/CouponDeleteDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
@@ -105,45 +105,41 @@ export default function AdminCouponsPage() {
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <CardTitle className="text-foreground">Coupons</CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search coupons..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 bg-background border-border h-9 text-sm"
-              />
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-full sm:w-48 bg-background border-border h-9 text-sm">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tabs.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search coupons..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 bg-background border-border h-9 text-sm"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={filter} onValueChange={setFilter} className="w-full">
-            <TabsList className="bg-muted p-1 mb-6 inline-flex w-auto border border-border flex-wrap h-auto gap-1">
-              {tabs.map((t) => (
-                <TabsTrigger
-                  key={t.value}
-                  value={t.value}
-                  className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm px-4"
-                >
-                  {t.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {tabs.map((t) => (
-              <TabsContent key={t.value} value={t.value} className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                <CouponListTable
-                  coupons={coupons.filter(c => c.code.toLowerCase().includes(search.toLowerCase()))}
-                  isLoading={isPending}
-                  filter={filter}
-                  onEdit={(c) => router.push(`/dashboard/coupons/${c.id}/edit`)}
-                  onDelete={setDeleteCoupon}
-                  onToggle={handleToggle}
-                  togglingId={togglingId}
-                />
-              </TabsContent>
-            ))}
-          </Tabs>
+          <CouponListTable
+            coupons={coupons.filter(c => c.code.toLowerCase().includes(search.toLowerCase()))}
+            isLoading={isPending}
+            filter={filter}
+            onEdit={(c) => router.push(`/dashboard/coupons/${c.id}/edit`)}
+            onDelete={setDeleteCoupon}
+            onToggle={handleToggle}
+            togglingId={togglingId}
+          />
         </CardContent>
       </Card>
 

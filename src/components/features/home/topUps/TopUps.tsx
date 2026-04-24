@@ -6,10 +6,12 @@ import { TopUpFilters } from './TopUpFilters';
 import { TopUpHeroSlider } from './TopUpHeroSlider';
 import { TopUpGrid } from './sections/TopUpGrid';
 import { TopUpHeader } from './sections/TopUpHeader';
-export type TopupFitlerTypes = 'all' | 'topup-mobile' | 'topup-service';
+import { useSearchParams } from 'next/navigation';
+export type TopupFilterTypes = 'all' | 'topup-mobile' | 'topup-service';
 export const TopUps = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<TopupFitlerTypes>('all');
+  const params = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(params.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState<TopupFilterTypes>('all');
 
   return (
     <div className="flex flex-col gap-12 w-full pb-12">

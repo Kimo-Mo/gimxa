@@ -1,7 +1,8 @@
 export interface SendNotificationPayload {
-  title: string;
+  subject: string;
   message: string;
-  user_id?: string;
+  user?: string;
+  email_type: 'default';
 }
 
 export interface NotificationListParams {

@@ -7,18 +7,14 @@ interface OrderDetailSummaryProps {
 }
 
 export function OrderDetailSummary({ order }: OrderDetailSummaryProps) {
-  const fmt = (val: string) => `$${parseFloat(val).toFixed(2)}`;
+  const fmt = (val: string) => `${order.currency} ${parseFloat(val).toFixed(2)}`;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
         <div>
           <div className="text-muted-foreground text-xs mb-0.5">Order Number</div>
-          <div className="font-mono font-semibold text-foreground">#{order.order_number}</div>
-        </div>
-        <div>
-          <div className="text-muted-foreground text-xs mb-0.5">User</div>
-          <div className="text-foreground">{order.user || <span className="text-muted-foreground italic">Unknown</span>}</div>
+          <div className="font-mono font-semibold text-foreground">{order.order_number}</div>
         </div>
         <div>
           <div className="text-muted-foreground text-xs mb-0.5">Date</div>

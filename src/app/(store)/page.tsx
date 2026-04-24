@@ -9,11 +9,11 @@ export default function HomePage() {
         <div className="flex justify-center mb-10">
           <TabsList className="bg-card/50 backdrop-blur-sm rounded-4xl gap-2 shadow-sm">
             <TabsTrigger value="digital-products" className="cursor-pointer">
-              <Gamepad2 className="hidden sm:block size-5 mr-2" />
+              <Gamepad2 className="size-5 mr-2" />
               Digital Products
             </TabsTrigger>
             <TabsTrigger value="direct-top-ups" className="cursor-pointer">
-              <Coins className="hidden sm:block size-5 mr-2" />
+              <Coins className="size-5 mr-2" />
               Direct Top-Ups
             </TabsTrigger>
           </TabsList>
