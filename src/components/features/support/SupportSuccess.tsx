@@ -7,7 +7,7 @@ interface SupportSuccessProps {
 
 export const SupportSuccess = ({ onReset }: SupportSuccessProps) => {
   return (
-    <div className="container max-w-2xl py-20 text-center space-y-6">
+    <div className="container max-w-2xl mx-auto py-20 text-center space-y-6">
       <div className="size-20 rounded-full bg-primary/20 flex items-center justify-center text-primary mx-auto animate-bounce">
         <CheckCircle2 size={40} />
       </div>

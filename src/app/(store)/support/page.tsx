@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function SupportPage() {
   return (
-    <div className="container py-12 space-y-12">
+    <div>
       <SupportHeader />
       <SupportClient />
     </div>

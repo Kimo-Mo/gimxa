@@ -6,6 +6,7 @@ import { RegisterForm } from './RegisterForm';
 import { ForgotPass } from './ForgotPass';
 import Image from 'next/image';
 import { VerifyOtp } from './VerifyOtp';
+import { useRouter } from 'next/navigation';
 
 interface AuthModalProps {
   open: boolean;
@@ -21,8 +22,17 @@ export type AuthModalState =
   | 'verify-otp';
 
 export const AuthModal = ({ open, onClose, currentState, setCurrentState }: AuthModalProps) => {
+  const router = useRouter();
   const handleStateChange = (state: AuthModalState) => {
     setCurrentState(state);
+  };
+
+  const handleGoogleSignIn = () => {
+    // for local host use this redirect_uri=http://localhost:3000
+    // for production use this redirect_uri=https://gimxa.com
+    router.push(
+      'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?scope=openid%20email%20profile&response_type=id_token&client_id=214740263821-bn827npekbkep9ng8d2f8lt0qsla6j2q.apps.googleusercontent.com&redirect_uri=https://gimxa.com&nonce=1234&service=lso&o2v=2&flowName=GeneralOAuthFlow'
+    );
   };
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -33,8 +43,11 @@ export const AuthModal = ({ open, onClose, currentState, setCurrentState }: Auth
         <div className="no-scrollbar overflow-y-auto max-h-[calc(100vh-15rem)] space-y-4">
           {(currentState === 'login' || currentState === 'register') && (
             <>
-              <Button variant="outline" className="w-full flex items-center gap-2">
-                <Image src="/google-logo.png" alt="google-logo" width={20} height={20}/>
+              <Button
+                variant="outline"
+                className="w-full flex items-center gap-2"
+                onClick={handleGoogleSignIn}>
+                <Image src="/google-logo.png" alt="google-logo" width={20} height={20} />
                 <p className="capitalize">{currentState} with Google</p>
               </Button>
               <div className="w-full h-px bg-border relative my-5">

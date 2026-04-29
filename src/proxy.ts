@@ -23,6 +23,7 @@ const BACKEND_API_PREFIXES = [
   '/api/codes',
   '/api/dashboard',
   '/api/payments',
+  '/api/support',
   '/api/v1/auth',
   '/api/v1/users',
   '/api/v1/catalog',
@@ -34,6 +35,7 @@ const BACKEND_API_PREFIXES = [
   '/api/v1/codes',
   '/api/v1/dashboard',
   '/api/v1/payments',
+  '/api/v1/support',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

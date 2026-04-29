@@ -51,5 +51,5 @@ export interface ResetPasswordConfirmBody {
 }
 
 export interface GoogleOauthPayload {
-  access_token: string;
+  auth_token: string;
 }
