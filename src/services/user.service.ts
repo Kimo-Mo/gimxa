@@ -1,8 +1,5 @@
 import api from '../lib/api/axios';
-import {
-  UpdateProfilePayload,
-  AdminAddUserPayload,
-} from '@/types';
+import { UpdateProfilePayload, AdminAddUserPayload } from '@/types';
 import type { AdminUpdateUserPayload, UserListParams } from '@/types/admin/users';
 
 export const userService = {
@@ -53,6 +50,10 @@ export const userService = {
   },
   adminUpdateUser: async (userId: string, payload: AdminUpdateUserPayload) => {
     const { data } = await api.patch(`/users/user/${userId}/profile/update/`, payload);
+    return data;
+  },
+  adminUpdateUserRole: async (userId: string, payload: { role: string }) => {
+    const { data } = await api.patch(`/users/admin/users/${userId}/update/role`, payload);
     return data;
   },
   adminDeleteUser: async (userId: string) => {

@@ -45,6 +45,9 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
     try {
       const response = (await paymentService.initPayment(payload)) as InitPaymentResponse;
       if (response.checkout_url) {
+        if (typeof window !== 'undefined' && details.order_number) {
+          sessionStorage.setItem('last_order_number', details.order_number);
+        }
         window.location.href = response.checkout_url;
       } else {
         setPaymentError('No checkout URL returned. Please contact support.');
@@ -146,7 +149,7 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                     <p>Quantity: {item.quantity}</p>
-                    <p>Price: {item.price}</p>
+                    <p>Price: {item.currency} {item.price}</p>
                     {item.is_topup && <p>Top-up Package: {item.topup_package ?? 'N/A'}</p>}
                   </div>
                   {item.is_topup && (

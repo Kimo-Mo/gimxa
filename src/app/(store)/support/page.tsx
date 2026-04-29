@@ -1,26 +1,23 @@
-'use client';
-
-import { useState } from 'react';
+import { Metadata } from 'next';
 import { SupportHeader } from '@/components/features/support/SupportHeader';
-import { SupportContactInfo } from '@/components/features/support/SupportContactInfo';
-import { SupportForm } from '@/components/features/support/SupportForm';
-import { SupportSuccess } from '@/components/features/support/SupportSuccess';
+import { SupportClient } from '@/components/features/support/SupportClient';
+
+export const metadata: Metadata = {
+  title: 'Support | Gimxa',
+  description: 'Get help with your orders, account, or any other questions.',
+  openGraph: {
+    title: 'Support | Gimxa',
+    description: 'Get help with your orders, account, or any other questions.',
+    url: 'https://gimxa.com/support',
+    images: ['https://gimxa.com/images/og-support.jpg'],
+  },
+};
 
 export default function SupportPage() {
-  const [submitted, setSubmitted] = useState(false);
-
-  if (submitted) {
-    return <SupportSuccess onReset={() => setSubmitted(false)} />;
-  }
-
   return (
     <div className="container py-12 space-y-12">
       <SupportHeader />
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-        <SupportContactInfo />
-        <SupportForm onSuccess={() => setSubmitted(true)} />
-      </div>
+      <SupportClient />
     </div>
   );
 }

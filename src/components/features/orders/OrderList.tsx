@@ -32,8 +32,12 @@ export function OrderList({
   return (
     <section className="space-y-4">
       <div className="relative">
-        <Search size={16} className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          size={16}
+          className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
+          id="order-search"
           placeholder="Search by order number, user id, payment status, coupon..."
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}

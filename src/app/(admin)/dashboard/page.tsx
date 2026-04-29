@@ -45,6 +45,7 @@ export default function AdminDashboardPage() {
   } = useAdminOrdersQuery({
     page: 1,
     page_size: 5,
+    filter: 'order_by_date=true',
   });
   const recentOrders = ordersData?.results ?? [];
   const totalOrders = ordersData?.count ?? null;

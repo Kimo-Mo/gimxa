@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios';
 
-export type KnownOrderStatus = 'pending' | 'completed' | 'cancelled' | 'processing' | 'failed';
+export type KnownOrderStatus = 'pending' | 'paid' | 'cancelled' | 'processing' | 'failed';
 export type OrderStatus = KnownOrderStatus | (string & {});
 export type OrderStatusFilter = 'all' | KnownOrderStatus;
 
@@ -38,6 +38,7 @@ export interface OrderDetailItem {
   product_name: string;
   product_slug: string;
   quantity: number;
+  currency: string;
   price: string;
   is_topup: boolean;
   topup_package: number | null;
@@ -68,9 +69,9 @@ export interface CancelOrderResponse {
 
 export const ORDER_STATUS_FILTERS: OrderStatusFilter[] = [
   'all',
+  'paid',
   'pending',
   'processing',
-  'completed',
   'cancelled',
   'failed',
 ];

@@ -22,10 +22,14 @@ export interface AdminNotification {
 export interface AdminSendNotificationPayload {
   subject: string;
   message: string;
-  user_id?: string; // if undefined, sends to all users
+  code?: string; // code of game key or topup code sent to user and email_type = code_sent
+  user?: string; // user id
+  email_type: 'default' | 'code_sent' | 'payment_success' | 'payment_failed' | 'credits_delivered'; // credits_delivered for automatic code delivery
 }
 
 export interface AdminNotificationListParams {
+  filter?: string; //ALLOWED_FILTERS = {"user", "is_read", "is_deleted", "is_active", "is_emailed", "created_at", "updated_at", "emailed_at", "readed_at"} => filter=user={user id},is_read={true/false} and so on...
+  search?: string; // search_with : (username, full_name, email, subject, message, email_type)
   page?: number;
-  limit?: number;
+  page_size?: number; // default = 10
 }

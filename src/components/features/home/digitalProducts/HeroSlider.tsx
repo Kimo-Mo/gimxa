@@ -61,7 +61,7 @@ export const HeroSlider = () => {
     );
 
   return (
-    <div className="relative w-full h-full min-h-90 overflow-hidden rounded-3xl group shadow-md">
+    <div className="relative w-full h-full min-h-70 md:min-h-90 overflow-hidden rounded-3xl group shadow-md ">
       {products.map((product: Product, index: number) => (
         <div
           key={product.id}

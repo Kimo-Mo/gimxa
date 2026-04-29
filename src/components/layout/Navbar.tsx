@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { Search, ShoppingCart, User, Loader2, Menu } from 'lucide-react';
 import { useCartStore } from '@/lib/stores/useCartStore';
-import { Badge, Button, Input, ThemeToggle } from '@/components/ui';
+import { Badge, Button, Input } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/useAuthStore';
 import { useAuthModal } from '@/providers/AuthModalProvider';
 import { Logo } from './Logo';
+import { NotificationBell } from '@/components/features/notifications';
 import { MobileDrawer } from './navbar/MobileDrawer';
 import { UserDropdown } from './navbar/UserDropdown';
 import { usePathname, useRouter } from 'next/navigation';
@@ -179,7 +180,6 @@ export const Navbar = () => {
 
             {/* ── Right Actions ── */}
             <nav className="flex items-center gap-2 md:gap-3">
-              <ThemeToggle className="bg-accent hover:bg-accent/80 dark:bg-transparent dark:hover:bg-foreground/10" />
               {/* Cart */}
               <Button variant="secondary" size="icon" className="relative">
                 <Link href="/cart" className="w-full h-full flex items-center justify-center">
@@ -193,6 +193,9 @@ export const Navbar = () => {
                   )}
                 </Link>
               </Button>
+
+              {/* Notification Bell */}
+              {isAuthenticated && user && <NotificationBell />}
 
               {/* Auth Area */}
               {isAuthenticated && user ? (

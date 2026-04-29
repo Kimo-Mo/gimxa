@@ -58,8 +58,8 @@ export const SupportForm = ({ onSuccess }: SupportFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="topic">Topic</Label>
-            <Select onValueChange={setTopic} required>
-              <SelectTrigger>
+            <Select name="topic" onValueChange={setTopic} required>
+              <SelectTrigger id="topic">
                 <SelectValue placeholder="Select a topic" />
               </SelectTrigger>
               <SelectContent>

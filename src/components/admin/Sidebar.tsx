@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Users, Zap, Tag, Bell } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Zap, Tag, Bell, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { name: 'Users', href: '/dashboard/users', icon: Users },
   { name: 'Coupons', href: '/dashboard/coupons', icon: Tag },
   { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
+  { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
 ];
 
 export function Sidebar({ className }: { className?: string }) {

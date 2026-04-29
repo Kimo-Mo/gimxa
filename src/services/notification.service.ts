@@ -1,5 +1,6 @@
 import api from '../lib/api/axios';
-import { SendNotificationPayload, NotificationListParams } from '@/types';
+import { SendNotificationPayload } from '@/types';
+import type { AdminNotificationListParams } from '@/types/admin/notifications';
 
 export const notificationService = {
   // Public
@@ -25,7 +26,7 @@ export const notificationService = {
     const { data } = await api.post('/notifications/admin/all/', payload);
     return data;
   },
-  adminNotificationsList: async (params?: NotificationListParams) => {
+  adminNotificationsList: async (params?: AdminNotificationListParams) => {
     const { data } = await api.get('/notifications/admin/all', { params });
     return data;
   },

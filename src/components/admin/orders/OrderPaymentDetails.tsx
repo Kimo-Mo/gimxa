@@ -26,7 +26,7 @@ export function OrderPaymentDetails({ paymentDetails }: OrderPaymentDetailsProps
           <div>
             <div className="text-muted-foreground text-xs mb-0.5">Amount Paid</div>
             <div className="text-foreground">
-              ${parseFloat(paymentDetails.amount).toFixed(2)}
+            {paymentDetails.currency} {parseFloat(paymentDetails.amount).toFixed(2)}
             </div>
           </div>
         </div>

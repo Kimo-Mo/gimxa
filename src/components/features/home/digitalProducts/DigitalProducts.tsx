@@ -16,9 +16,9 @@ export const DigitalProducts = () => {
   return (
     <div className="flex flex-col gap-12 w-full pb-12">
       {/* Top Grid Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-90">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:min-h-90">
         {/* Left Column - Hero Slider */}
-        <div className="md:col-span-2 relative h-90 md:h-auto">
+        <div className="md:col-span-2 relative min-h-70 md:min-h-90 md:h-auto">
           <HeroSlider />
         </div>
 

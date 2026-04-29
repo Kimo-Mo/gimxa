@@ -105,7 +105,7 @@ export default function AdminOrdersPage() {
   }, [searchInput, search]);
 
   const { data, isPending, isError } = useAdminOrdersQuery({
-    filter: activeTab !== 'all' ? `status=${activeTab}` : '',
+    filter: activeTab !== 'all' ? `status=${activeTab},order_by_date=true` : 'order_by_date=true',
     search: search || undefined,
     page,
     page_size: PAGE_SIZE,

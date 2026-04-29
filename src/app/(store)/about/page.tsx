@@ -1,9 +1,19 @@
-'use client';
-
+import { Metadata } from 'next';
 import { Gamepad2 } from 'lucide-react';
 import { AboutHero } from '@/components/features/about/AboutHero';
 import { AboutValues } from '@/components/features/about/AboutValues';
 import { AboutStats } from '@/components/features/about/AboutStats';
+
+export const metadata: Metadata = {
+  title: 'About Us | Gimxa',
+  description: 'Learn more about Gimxa, your premier destination for digital games and top-ups.',
+  openGraph: {
+    title: 'About Us | Gimxa',
+    description: 'Learn more about Gimxa, your premier destination for digital games and top-ups.',
+    url: 'https://gimxa.com/about',
+    images: ['https://gimxa.com/images/og-about.jpg'],
+  },
+};
 
 export default function AboutPage() {
   return (

@@ -7,6 +7,7 @@ export interface OrderPaymentDetails {
   gateway_name: string;
   status: string;
   amount: string;
+  currency: string;
 }
 
 export interface AdminOrder {

@@ -10,7 +10,7 @@ interface OrderStatusBadgeProps {
 export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
   const normalized = status.toString().toLowerCase();
 
-  if (normalized === 'completed') {
+  if (normalized === 'paid') {
     return (
       <Badge className="border-success/20 bg-success/10 text-success">
         <CheckCircle2 className="mr-1 size-3.5" />

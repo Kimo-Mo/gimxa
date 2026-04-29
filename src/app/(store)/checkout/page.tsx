@@ -10,6 +10,7 @@ import { useAuthModal } from '@/providers/AuthModalProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '@/app/loading';
 import type { ApiResponse } from '@/types';
+import { useRouter } from 'next/navigation';
 
 interface CheckoutOrderResponse {
   order_number: string;
@@ -35,6 +36,7 @@ const extractResponseData = <T,>(response: T | ApiResponse<T>): T =>
     : (response as T);
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items, getTotal, _hasHydrated, syncWithServer } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const { openModal } = useAuthModal();
@@ -103,6 +105,9 @@ export default function CheckoutPage() {
       })) as InitPaymentResponse;
 
       if (paymentResponse.checkout_url) {
+        if (typeof window !== 'undefined' && orderNumber) {
+          window.sessionStorage.setItem('last_order_number', orderNumber);
+        }
         window.location.href = paymentResponse.checkout_url;
         return;
       }
@@ -110,7 +115,7 @@ export default function CheckoutPage() {
       // Stripe returned no checkout_url — treat as unexpected but order exists
       setInfo('Order created. Redirecting to your orders…');
       await syncWithServer();
-      window.location.href = '/orders';
+      router.push('/orders');
     } catch (err) {
       if (orderNumber) {
         // Order was created but payment init failed — clear cart and redirect
@@ -119,7 +124,7 @@ export default function CheckoutPage() {
         } catch {
           // best-effort cart sync
         }
-        window.location.href = `/orders?error=payment_failed&order=${orderNumber}`;
+        router.push(`/orders?error=payment_failed&order=${orderNumber}`);
         return;
       }
       const message =
@@ -131,7 +136,7 @@ export default function CheckoutPage() {
       }
       setIsProcessingPayment(false);
     }
-  }, [isAuthenticated, openModal, syncWithServer]);
+  }, [isAuthenticated, openModal, syncWithServer, router]);
 
   useEffect(() => {
     loadCartSummary();

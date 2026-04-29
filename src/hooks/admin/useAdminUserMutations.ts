@@ -23,7 +23,7 @@ export function useRoleChangeMutation() {
 
   return useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: RoleEnum }) =>
-      userService.adminUpdateUser(userId, { role }),
+      userService.adminUpdateUserRole(userId, { role }),
     onSuccess: async (_, { userId }) => {
       await cacheClear();
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });

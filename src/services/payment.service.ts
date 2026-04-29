@@ -3,10 +3,9 @@ import api from '../lib/api/axios';
 export interface PaymentListParams {
   page?: number;
   page_size?: number;
-  user?: string;
+  user?: string; //you can search with: ['username', 'user_email','full_name']
   status?: string;
-  ordering?: string | string[];
-  search?: string;
+  ordering?: string | string[]; // amount | -amount , created_at | -created_at
 }
 
 export interface InitPaymentPayload {

@@ -31,6 +31,7 @@ export const TopUpFilters = ({
         <Input
           placeholder="Search games..."
           value={searchQuery}
+          id="topup-search"
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9 bg-background/50"
         />

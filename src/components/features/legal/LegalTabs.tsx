@@ -5,11 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, Card, Button } from '@/compon
 import { cn } from '@/lib/utils';
 import { LEGAL_DOCS } from './LegalConstants';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export const LegalTabs = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabParam = searchParams.get('tab');
+  
+  const activeTab = tabParam && LEGAL_DOCS.some((doc) => doc.id === tabParam) ? tabParam : 'terms';
+
+  const handleTabChange = (value: string) => {
+    router.replace(`/legal?tab=${value}`, { scroll: false });
+  };
+
   return (
     <Tabs
-      defaultValue="terms"
+      value={activeTab}
+      onValueChange={handleTabChange}
       orientation="vertical"
       className="flex flex-col lg:flex-row gap-12 items-start">
       {/* ── Sidebar Navigation ── */}
@@ -67,6 +79,7 @@ export const LegalTabs = () => {
                   prose-headings:font-black prose-headings:tracking-tighter prose-headings:text-foreground
                   prose-h1:text-4xl prose-h1:mb-8
                   prose-h2:text-2xl prose-h2:mt-12 prose-h2:pb-2 prose-h2:border-b prose-h2:border-border/50
+                  prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
                   prose-p:text-muted-foreground prose-p:leading-relaxed
                   prose-li:text-muted-foreground
                   prose-strong:text-primary prose-strong:font-bold">

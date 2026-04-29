@@ -259,6 +259,7 @@ export default function CartSummary() {
       <CardFooter className="flex flex-col gap-3">
         <div className="w-full space-y-2">
           <Input
+            id="coupon"
             placeholder="Enter coupon code"
             className="uppercase"
             value={couponCode}
