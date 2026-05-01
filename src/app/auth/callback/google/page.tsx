@@ -54,9 +54,13 @@ function GoogleCallbackContent() {
         } else {
           throw new Error('Invalid user data received from server');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Google OAuth error:', error);
-        toast.error('Failed to authenticate with Google. Please try again.');
+        const errorMsg =
+          error?.response?.data?.detail ||
+          error?.response?.data?.message ||
+          'Failed to authenticate with Google. Please try again.';
+        toast.error(errorMsg);
         router.replace('/?auth=login');
       }
     };

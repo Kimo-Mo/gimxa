@@ -33,7 +33,9 @@ export const authService = {
   },
 
   async googleOauth2(data: GoogleOauthPayload): Promise<LoginResponse> {
-    const response = await apiClient.post('/auth/o2/google/', data);
+    const response = await apiClient.post('/auth/o2/google/', data, {
+      skipTokenRefresh: true,
+    });
     return response.data;
   },
 

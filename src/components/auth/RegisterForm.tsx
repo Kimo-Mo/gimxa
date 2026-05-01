@@ -30,8 +30,10 @@ const registerSchema = z
 
 export const RegisterForm = ({
   setCurrentState,
+  onClose
 }: {
   setCurrentState: (state: AuthModalState) => void;
+  onClose: () => void;
 }) => {
   const router = useRouter();
   const {
@@ -142,11 +144,11 @@ export const RegisterForm = ({
       </form>
       <p className="text-sm">
         By signing up, you to agree to Gimxa&apos;{' '}
-        <Link href="/legal" className="text-accent-foreground font-bold">
+        <Link href="/legal?tab=terms" className="text-accent-foreground font-bold" onClick={() => onClose()}>
           Terms and Conditions
         </Link>{' '}
         and acknowledge that Gimxa{' '}
-        <Link href="/legal" className="text-accent-foreground font-bold">
+        <Link href="/legal?tab=privacy" className="text-accent-foreground font-bold" onClick={() => onClose()}>
           Privacy Policy
         </Link>{' '}
         applies to you.

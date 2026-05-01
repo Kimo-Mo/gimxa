@@ -7,9 +7,18 @@ declare module 'axios' {
   }
 }
 
+const isServer = typeof window === 'undefined';
+let baseURL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+if (isServer && baseURL.startsWith('/')) {
+  const backendUrlString = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8000';
+  const backendUrl = backendUrlString.endsWith('/') ? backendUrlString.slice(0, -1) : backendUrlString;
+  baseURL = baseURL.replace('/api', `${backendUrl}/api/v1`);
+}
+
 const api = axios.create({
-  // Use relative URL so the request hits the Next.js API route / proxy middleware.
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+  // Use relative URL on client, absolute URL to backend on server
+  baseURL,
   withCredentials: true,
 });
 
@@ -58,7 +67,7 @@ const ensureCSRFToken = async (): Promise<string | null> => {
 
   csrfFetching = true;
   try {
-    await axios.get(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/auth/csrf-token/`, {
+    await axios.get(`${baseURL}/auth/csrf-token/`, {
       withCredentials: true,
     });
     token = getCookie('csrftoken');

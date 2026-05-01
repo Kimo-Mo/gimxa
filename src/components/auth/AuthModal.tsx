@@ -28,10 +28,12 @@ export const AuthModal = ({ open, onClose, currentState, setCurrentState }: Auth
   };
 
   const handleGoogleSignIn = () => {
-    // for local host use this redirect_uri=http://localhost:3000
-    // for production use this redirect_uri=https://gimxa.com
+    // Dynamically get the current origin to support both localhost and production
+    const redirectUri = `${window.location.origin}/auth/callback/google`;
     router.push(
-      'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?scope=openid%20email%20profile&response_type=id_token&client_id=214740263821-bn827npekbkep9ng8d2f8lt0qsla6j2q.apps.googleusercontent.com&redirect_uri=https://gimxa.com&nonce=1234&service=lso&o2v=2&flowName=GeneralOAuthFlow'
+      `https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?scope=openid%20email%20profile&response_type=id_token&client_id=214740263821-bn827npekbkep9ng8d2f8lt0qsla6j2q.apps.googleusercontent.com&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&nonce=1234&service=lso&o2v=2&flowName=GeneralOAuthFlow`
     );
   };
   return (
@@ -60,7 +62,7 @@ export const AuthModal = ({ open, onClose, currentState, setCurrentState }: Auth
           {currentState === 'login' && (
             <LoginForm setCurrentState={handleStateChange} onClose={onClose} />
           )}
-          {currentState === 'register' && <RegisterForm setCurrentState={handleStateChange} />}
+          {currentState === 'register' && <RegisterForm onClose={onClose} setCurrentState={handleStateChange} />}
           {currentState === 'forgot-password' && <ForgotPass setCurrentState={handleStateChange} />}
           {currentState === 'check your email' && (
             <p className="font-semibold text-lg">
