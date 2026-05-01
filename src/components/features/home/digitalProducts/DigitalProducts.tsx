@@ -14,38 +14,26 @@ import {
 
 export const DigitalProducts = () => {
   return (
-    <div className="flex flex-col gap-12 w-full pb-12">
+    <div className="flex flex-col gap-6 lg:gap-12 w-full pb-12">
       {/* Top Grid Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:min-h-90">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Hero Slider */}
-        <div className="md:col-span-2 relative min-h-70 md:min-h-90 md:h-auto">
+        <div className="lg:col-span-2 relative min-h-70 md:h-auto">
           <HeroSlider />
         </div>
 
         {/* Right Column - Two Banners */}
         <div className="flex flex-col gap-6 h-full">
-          <BannerCard
-            image="/subscription.jpg"
-            buttonText="Subscriptions"
-            href="/store?category=subscriptions"
-          />
+          <BannerCard image="/subscriptions.png" href="/store?category=subscriptions" />
+          <BannerCard image="/software.png" href="/store?category=software" />
         </div>
       </div>
 
       {/* Quick Access Banners */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 min-h-45">
-        <BannerCard image="/pc-games.jpg" buttonText="pc games" href="/store?category=pc-games" />
-        <BannerCard
-          image="/console-games.jpg"
-          buttonText="console games"
-          href="/store?category=console-games"
-        />
-        <BannerCard
-          image="/gift-cards.jpg"
-          buttonText="GIFT CARDS"
-          href="/store?category=gift-cards"
-        />
-        <BannerCard image="/software.jpg" buttonText="software" href="/store?category=software" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-20">
+        <BannerCard image="/pc-games-1.png" href="/store?category=pc-games" />
+        <BannerCard image="/console-games.png" href="/store?category=console-games" />
+        <BannerCard image="/gift-cards-1.png" href="/store?category=gift-cards" />
       </div>
 
       {/* Popular Games Section */}
