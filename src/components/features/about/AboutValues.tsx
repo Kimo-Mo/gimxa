@@ -19,7 +19,7 @@ export const AboutValues = () => {
           <div className="space-y-4">
             <h3 className="text-3xl font-bold tracking-tight">Instant Delivery</h3>
             <p className="text-muted-foreground leading-relaxed">
-              No more waiting. Our automated system ensures your codes and top-ups are delivered the
+              No more waiting. Our automated system ensures your codes and top up are delivered the
               very second your payment is confirmed. Gaming doesn&apos;t wait, and neither should
               you.
             </p>

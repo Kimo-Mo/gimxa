@@ -81,7 +81,7 @@ export function TopupTable({ topups, loading, error, setDeleteSlug }: TopupTable
               <TableCell colSpan={7} className="text-center py-12">
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                   <Zap className="h-10 w-10 opacity-30" />
-                  <span className="text-sm">No top-up games found.</span>
+                  <span className="text-sm">No top up games found.</span>
                 </div>
               </TableCell>
             </TableRow>

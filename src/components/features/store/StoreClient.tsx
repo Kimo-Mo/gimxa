@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import StoreSidebarFilter, {
   StoreFilterState,
@@ -10,6 +10,8 @@ import StoreSortSelect from '@/components/features/store/StoreSortSelect';
 import ProductGrid from '@/components/features/product/ProductGrid';
 import { catalogService } from '@/services/catalog.service';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 
@@ -34,9 +36,32 @@ export function StoreClient() {
     price_max: Number(searchParams.get('price_max')) || 9999,
     ordering: searchParams.get('ordering') || 'price',
     region: searchParams.get('region') || '',
+    platform: searchParams.get('platform') || '',
+    type: searchParams.get('type') || '',
   });
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const debouncedSearch = useDebounce(search, 500);
+
+  // ── Sync filters state whenever the URL searchParams change ──
+  // This fixes navigation from the sidebar drawer (e.g. /store?category=subscriptions)
+  // where the URL updates but filters state was not re-initialized.
+  useEffect(() => {
+    setFilters({
+      category: parseMultiValueParam(searchParams.get('category')),
+      tag: parseMultiValueParam(searchParams.get('tag')),
+      is_popular: searchParams.get('is_popular') === 'true',
+      is_available: searchParams.get('is_available') === 'true',
+      price_min: Number(searchParams.get('price_min')) || 0,
+      price_max: Number(searchParams.get('price_max')) || 9999,
+      ordering: searchParams.get('ordering') || 'price',
+      region: searchParams.get('region') || '',
+      platform: searchParams.get('platform') || '',
+      type: searchParams.get('type') || '',
+    });
+    setSearch(searchParams.get('search') || '');
+    setPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const [page, setPage] = useState(1);
   const limit = 8;
@@ -49,7 +74,9 @@ export function StoreClient() {
         categories: filters.category?.length ? filters.category.join(',') : undefined,
         tags: filters.tag?.length ? filters.tag.join(',') : undefined,
         region: filters.region?.length ? filters.region : undefined,
-        topups: false,
+        platform: filters.platform?.length ? filters.platform : undefined,
+        product_types: filters.type?.length ? filters.type : undefined,
+        topups: undefined,
         price_min: filters.price_min > 0 ? filters.price_min : undefined,
         price_max: filters.price_max === 9999 ? undefined : filters.price_max,
         ordering: filters.ordering,
@@ -72,6 +99,8 @@ export function StoreClient() {
     if (newFilters.category?.length) params.set('category', newFilters.category.join(','));
     if (newFilters.tag?.length) params.set('tag', newFilters.tag.join(','));
     if (newFilters.region?.length) params.set('region', newFilters.region);
+    if (newFilters.platform?.length) params.set('platform', newFilters.platform);
+    if (newFilters.type?.length) params.set('type', newFilters.type);
     if (newFilters.is_popular) params.set('is_popular', 'true');
     if (newFilters.is_available) params.set('is_available', 'true');
     if (newFilters.price_min > 0) params.set('price_min', newFilters.price_min.toString());
@@ -97,6 +126,8 @@ export function StoreClient() {
       price_max: 9999,
       ordering: 'price',
       region: '',
+      platform: '',
+      type: '',
     });
   };
 
@@ -114,18 +145,30 @@ export function StoreClient() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <div className="lg:hidden w-full flex justify-between items-center mb-4">
-          <MobileStoreFilter
-            search={search}
-            setSearch={setSearch}
-            filters={filters}
-            onChange={handleApplyFilters}
-          />
-          <StoreSortSelect
-            value={filters.ordering}
-            onChange={(val) => handleApplyFilters({ ...filters, ordering: val })}
-            className="flex-1 ml-4"
-          />
+        <div className="lg:hidden w-full flex flex-col gap-4 mb-4">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="mobile-main-search"
+              placeholder="Search For Games, Gift Card"
+              className="pl-9 border-border text-sm h-10 w-full"
+              value={search}
+              onChange={(e) => setSearch(e.target.value || '')}
+            />
+          </div>
+          <div className="flex justify-between items-center w-full">
+            <MobileStoreFilter
+              search={search}
+              setSearch={setSearch}
+              filters={filters}
+              onChange={handleApplyFilters}
+            />
+            <StoreSortSelect
+              value={filters.ordering}
+              onChange={(val) => handleApplyFilters({ ...filters, ordering: val })}
+              className="flex-1 ml-4"
+            />
+          </div>
         </div>
 
         <aside className="hidden lg:block w-70 shrink-0 sticky top-24">
@@ -139,7 +182,17 @@ export function StoreClient() {
         </aside>
 
         <main className="flex-1 w-full min-w-0">
-          <div className="hidden lg:flex items-center mb-6">
+          <div className="hidden lg:flex items-center gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="main-search"
+                placeholder="Search For Games, Gift Card"
+                className="pl-9 border-border text-sm h-10 w-full bg-card"
+                value={search}
+                onChange={(e) => setSearch(e.target.value || '')}
+              />
+            </div>
             <StoreSortSelect
               value={filters.ordering}
               onChange={(val) => handleApplyFilters({ ...filters, ordering: val })}

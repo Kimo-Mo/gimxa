@@ -48,12 +48,12 @@ export const HeroSlider = () => {
 
   if (isLoading)
     return (
-      <Skeleton className="relative w-full h-full min-h-80 overflow-hidden rounded-3xl group" />
+      <Skeleton className="relative w-full h-full aspect-[16/10] lg:aspect-auto overflow-hidden rounded-3xl group" />
     );
 
   if (error || !products.length)
     return (
-      <div className="relative w-full h-full min-h-80 overflow-hidden rounded-3xl group flex items-center justify-center bg-muted/20">
+      <div className="relative w-full h-full aspect-[16/10] lg:aspect-auto overflow-hidden rounded-3xl group flex items-center justify-center bg-muted/20">
         <p className="text-center text-muted-foreground">
           {error ? 'Error loading products' : 'No products found'}
         </p>
@@ -61,7 +61,7 @@ export const HeroSlider = () => {
     );
 
   return (
-    <div className="relative w-full h-full min-h-70 md:min-h-90 overflow-hidden rounded-3xl group shadow-md ">
+    <div className="relative w-full h-full aspect-[16/10] lg:aspect-auto overflow-hidden rounded-3xl group shadow-md">
       {products.map((product: Product, index: number) => (
         <div
           key={product.id}
@@ -84,12 +84,9 @@ export const HeroSlider = () => {
               No Image
             </div>
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent flex flex-col items-center justify-end pb-12 text-center text-white p-6">
-            <h2 className="text-4xl md:text-6xl font-black mb-2 tracking-tighter drop-shadow-2xl capitalize">
-              {product.name}
-            </h2>
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent flex flex-col items-center justify-end pb-8 md:pb-12 text-center text-white p-4 md:p-6">
             <Link href={`/product/${product.slug}`}>
-              <Button className="bg-white text-black hover:bg-white/90 rounded-full px-12 py-6 text-xl font-black uppercase lg:cursor-pointer">
+              <Button className="bg-white text-black hover:bg-white/90 rounded-full px-6 py-4 text-sm md:px-12 md:py-6 md:text-xl font-black uppercase lg:cursor-pointer">
                 Order Now
               </Button>
             </Link>
@@ -102,13 +99,13 @@ export const HeroSlider = () => {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/40 text-white p-2 cursor-pointer rounded-full backdrop-blur-sm lg:opacity-0 group-hover:lg:opacity-100 transition-opacity">
-            <ChevronLeft size={32} />
+            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/40 text-white p-1 md:p-2 cursor-pointer rounded-full backdrop-blur-sm lg:opacity-0 group-hover:lg:opacity-100 transition-opacity">
+            <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/40 text-white p-2 cursor-pointer rounded-full backdrop-blur-sm lg:opacity-0 group-hover:lg:opacity-100 transition-opacity">
-            <ChevronRight size={32} />
+            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/40 text-white p-1 md:p-2 cursor-pointer rounded-full backdrop-blur-sm lg:opacity-0 group-hover:lg:opacity-100 transition-opacity">
+            <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
           </button>
           {/* Dots */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">

@@ -21,6 +21,9 @@ import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
 import { useProductDetailQuery } from '@/hooks/admin/useProductDetailQuery';
 import { useUpdateProductMutation } from '@/hooks/admin/useUpdateProductMutation';
 import { useCreateTagMutation, useDeleteTagMutation } from '@/hooks/admin/useTagMutations';
+import { useRegionsQuery } from '@/hooks/admin/useRegionsQuery';
+import { useTypesQuery } from '@/hooks/admin/useTypesQuery';
+import { usePlatformsQuery } from '@/hooks/admin/usePlatformsQuery';
 import type { ProductTag } from '@/types/catalog';
 
 export default function AdminProductEditPage() {
@@ -40,7 +43,14 @@ export default function AdminProductEditPage() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [isPopular, setIsPopular] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
-  const [region, setRegion] = useState('global');
+  const [region, setRegion] = useState('');
+  const [type, setType] = useState('');
+  const [platform, setPlatform] = useState('');
+  const [help, setHelp] = useState('');
+  const [priceBeforeOffer, setPriceBeforeOffer] = useState('');
+  const [offerValue, setOfferValue] = useState('');
+
+
 
   // Collections
   const [images, setImages] = useState<ImageState[]>([]);
@@ -58,6 +68,30 @@ export default function AdminProductEditPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [isProductLoaded, setIsProductLoaded] = useState(false);
+
+  useEffect(() => {
+    if (priceBeforeOffer) {
+      const basePrice = parseFloat(priceBeforeOffer);
+      if (!isNaN(basePrice)) {
+        if (offerValue) {
+          const discount = parseFloat(offerValue);
+          if (!isNaN(discount)) {
+            const finalPrice = basePrice - (basePrice * (discount / 100));
+            setPrice(finalPrice.toFixed(2));
+          } else {
+            setPrice(basePrice.toFixed(2));
+          }
+        } else {
+          setPrice(basePrice.toFixed(2));
+        }
+      } else if (isProductLoaded) {
+        setPrice('');
+      }
+    } else if (isProductLoaded) {
+      setPrice('');
+    }
+  }, [priceBeforeOffer, offerValue, isProductLoaded]);
 
   const clearError = (field: string) =>
     setErrors((prev) => {
@@ -69,6 +103,9 @@ export default function AdminProductEditPage() {
   // Queries & Mutations
   const categoriesQuery = useCategoriesQuery();
   const tagsQuery = useTagsQuery();
+  const regionsQuery = useRegionsQuery();
+  const typesQuery = useTypesQuery();
+  const platformsQuery = usePlatformsQuery();
   const productQuery = useProductDetailQuery(slug);
   const updateMutation = useUpdateProductMutation();
   const createTagMutation = useCreateTagMutation();
@@ -76,6 +113,9 @@ export default function AdminProductEditPage() {
 
   const allCategories = categoriesQuery.data?.filter((c) => !c.name.startsWith('Topup')) ?? [];
   const allTags = tagsQuery.data ?? [];
+  const allRegions = regionsQuery.data ?? [];
+  const allTypes = typesQuery.data ?? [];
+  const allPlatforms = platformsQuery.data ?? [];
 
   // Data hydration
   useEffect(() => {
@@ -116,11 +156,18 @@ export default function AdminProductEditPage() {
       setIsAvailable(data.is_available ?? true);
       setIsPopular(data.is_popular ?? false);
       setIsFeatured(data.is_featured ?? false);
-      setRegion(data.region ?? 'global');
+      setRegion(data.region?.id ? String(data.region.id) : '');
+      setType(data.type?.id ? String(data.type.id) : '');
+      setPlatform(data.platform?.id ? String(data.platform.id) : '');
+      setHelp(data.help || '');
+      setPriceBeforeOffer(data.price_before_offer ? String(Number(data.price_before_offer).toFixed(2)) : '');
+      setOfferValue(data.offer_value ? String(Number(data.offer_value).toFixed(2)) : '');
       setImages(nextImages);
       setAttributes(nextAttributes);
       setSelectedCategory(nextCategory);
       setSelectedTags(data.tags?.map((t) => t.id) ?? []);
+      // Must be set LAST in the same batch so Quill mounts with the correct description
+      setIsProductLoaded(true);
     });
 
     // isDirty reset still needs the timeout since it runs after the above batch
@@ -246,9 +293,8 @@ export default function AdminProductEditPage() {
 
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Product name is required.';
-    // Update US1 regex price validation
-    if (!price || parseFloat(price) <= 0 || !/^\d+(\.\d{1,2})?$/.test(price))
-      newErrors.price = 'Price is required, must be > 0, and max 2 decimal places.';
+    if (!priceBeforeOffer || parseFloat(priceBeforeOffer) <= 0 || !/^\d+(\.\d{1,2})?$/.test(priceBeforeOffer))
+      newErrors.priceBeforeOffer = 'Price before offer is required, must be > 0, and max 2 decimal places.';
     if (!selectedCategory) newErrors.category = 'Category is required.';
     if (!stockMode) newErrors.stockMode = 'Stock mode is required.';
     if (stockMode === 'manual' && !manualFulfillmentTime)
@@ -267,7 +313,11 @@ export default function AdminProductEditPage() {
     formData.append('name', name);
     formData.append('product_type', 'digital');
     formData.append('stock_mode', stockMode);
-    formData.append('region', region);
+    
+    if (region) formData.append('region', region);
+    if (type) formData.append('type', type);
+    if (platform) formData.append('platform', platform);
+    
     if (price) formData.append('price', price);
 
     if (stockMode === 'manual' && manualFulfillmentTime) {
@@ -278,6 +328,16 @@ export default function AdminProductEditPage() {
 
     formData.append('short_description', shortDescription);
     formData.append('description', description);
+    
+    if (help) formData.append('help', help);
+    else formData.append('help', ''); // Clear if empty
+    
+    if (priceBeforeOffer) formData.append('price_before_offer', priceBeforeOffer);
+    else formData.append('price_before_offer', '');
+
+    if (offerValue) formData.append('offer_value', offerValue);
+    else formData.append('offer_value', '');
+    
     formData.append('is_active', isActive ? 'true' : 'false');
     formData.append('is_available', isAvailable ? 'true' : 'false');
     formData.append('is_popular', isPopular ? 'true' : 'false');
@@ -403,11 +463,25 @@ export default function AdminProductEditPage() {
           setIsFeatured={setIsFeatured}
           region={region}
           setRegion={setRegion}
+          type={type}
+          setType={setType}
+          platform={platform}
+          setPlatform={setPlatform}
+          help={help}
+          setHelp={setHelp}
+          priceBeforeOffer={priceBeforeOffer}
+          setPriceBeforeOffer={setPriceBeforeOffer}
+          offerValue={offerValue}
+          setOfferValue={setOfferValue}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           categories={allCategories}
+          regions={allRegions}
+          types={allTypes}
+          platforms={allPlatforms}
           errors={errors}
           clearError={clearError}
+          isLoaded={isProductLoaded}
         />
 
         <ProductImages

@@ -16,7 +16,7 @@ import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { catalogService } from '@/services/catalog.service';
-import { ProductCategory, ProductTag } from '@/types';
+import { ProductCategory, ProductTag, Region, Platform, ProductTypeEntity } from '@/types';
 
 export interface StoreFilterState {
   category?: string[];
@@ -27,6 +27,8 @@ export interface StoreFilterState {
   price_max: number;
   ordering: string;
   region: string;
+  platform: string;
+  type: string;
 }
 
 interface StoreSidebarFilterProps {
@@ -37,14 +39,7 @@ interface StoreSidebarFilterProps {
   onChange: (filters: StoreFilterState) => void;
 }
 
-const REGIONS = [
-  { value: 'global', label: 'Global' },
-  { value: 'eu', label: 'Europe (EU)' },
-  { value: 'us', label: 'United States (US)' },
-  { value: 'mena', label: 'Middle East & Africa (MENA)' },
-  { value: 'latam', label: 'Latin America (LATAM)' },
-  { value: 'asia', label: 'Asia' },
-];
+
 
 export default function StoreSidebarFilter({
   className,
@@ -63,11 +58,31 @@ export default function StoreSidebarFilter({
     queryFn: () => catalogService.publicTagsList(),
   });
 
+  const { data: regionsResponse } = useQuery({
+    queryKey: ['publicRegionsList'],
+    queryFn: () => catalogService.publicRegionsList(),
+  });
+
+  const { data: platformsResponse } = useQuery({
+    queryKey: ['publicPlatformsList'],
+    queryFn: () => catalogService.publicPlatformsList(),
+  });
+
+  const { data: typesResponse } = useQuery({
+    queryKey: ['publicTypesList'],
+    queryFn: () => catalogService.publicTypesList(),
+  });
+
   const categoriesData: ProductCategory[] = Array.isArray(categoriesResponse)
     ? categoriesResponse
     : categoriesResponse?.data || [];
-  const categories = categoriesData.filter((category) => !category.slug.startsWith('topup-'));
+  const categories = categoriesData;
   const tags: ProductTag[] = Array.isArray(tagsResponse) ? tagsResponse : tagsResponse?.data || [];
+
+  // More robust extraction for regions
+  const regions: Region[] = regionsResponse?.data || (Array.isArray(regionsResponse) ? regionsResponse : []);
+  const platforms: Platform[] = platformsResponse?.data || (Array.isArray(platformsResponse) ? platformsResponse : []);
+  const types: ProductTypeEntity[] = typesResponse?.data || (Array.isArray(typesResponse) ? typesResponse : []);
 
   const handleCategoryChange = (slug: string, checked: boolean) => {
     onChange({
@@ -96,22 +111,7 @@ export default function StoreSidebarFilter({
 
   return (
     <div className={cn('space-y-6 w-full p-6', className)}>
-      {/* Search */}
-      <div className="space-y-3">
-        <Label className="text-sm font-semibold" htmlFor="filter-search">
-          Product Name
-        </Label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="filter-search"
-            placeholder="Search For Games, Gift Card"
-            className="pl-9 border-border text-sm h-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value || '')}
-          />
-        </div>
-      </div>
+      {/* Search has been moved to StoreClient.tsx */}
 
       {/* Checkboxes (Available & Popular) */}
       <div className="space-y-3 pt-2">
@@ -178,7 +178,7 @@ export default function StoreSidebarFilter({
                         checked={(filters.category || []).includes(c.slug)}
                         onCheckedChange={(checked) => handleCategoryChange(c.slug, !!checked)}
                       />
-                      <span>{c.name}</span>
+                      <span className={`capitalize ${(filters.category || []).includes(c.slug) ? "text-primary font-bold" : ""}`}>{c.name}</span>
                     </label>
                   ))
                 )}
@@ -202,7 +202,7 @@ export default function StoreSidebarFilter({
                         checked={(filters.tag || []).includes(t.slug)}
                         onCheckedChange={(checked) => handleTagChange(t.slug, !!checked)}
                       />
-                      <span className="capitalize">{t.name}</span>
+                      <span className={`capitalize ${(filters.tag || []).includes(t.slug) ? "text-primary font-bold" : ""}`}>{t.name}</span>
                     </label>
                   ))
                 )}
@@ -221,14 +221,74 @@ export default function StoreSidebarFilter({
                 onValueChange={handleRegionChange}
                 className="space-y-3 py-1 pl-1 max-h-48 overflow-y-auto scrollbar-hide">
                 <div className="text-sm text-muted-foreground space-y-3 py-1 pl-1 max-h-48 overflow-y-auto scrollbar-hide">
-                  {REGIONS.map((r) => (
-                    <div key={r.value} className="flex items-center space-x-3">
-                      <RadioGroupItem value={r.value} id={`region-${r.value}`} />
-                      <Label htmlFor={`region-${r.value}`} className="cursor-pointer font-normal">
-                        {r.label}
-                      </Label>
-                    </div>
-                  ))}
+                  {regions.length === 0 ? (
+                    <div className="text-sm">None available.</div>
+                  ) : (
+                    regions.map((r) => (
+                      <div key={r.id} className="flex items-center space-x-3">
+                        <RadioGroupItem value={r.slug} id={`region-${r.slug}`} />
+                        <Label htmlFor={`region-${r.slug}`} className={`cursor-pointer font-normal capitalize ${(filters.region || '').includes(r.slug) ? "text-primary font-bold" : ""}`}>
+                          {r.name}
+                        </Label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </RadioGroup>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Platforms */}
+          <AccordionItem value="platforms" className="border-none">
+            <AccordionTrigger className="hover:no-underline py-3 px-0 font-semibold text-sm cursor-pointer">
+              Platform
+            </AccordionTrigger>
+            <AccordionContent>
+              <RadioGroup
+                value={filters.platform || ''}
+                onValueChange={(val) => onChange({ ...filters, platform: val })}
+                className="space-y-3 py-1 pl-1 max-h-48 overflow-y-auto scrollbar-hide">
+                <div className="text-sm text-muted-foreground space-y-3 py-1 pl-1 max-h-48 overflow-y-auto scrollbar-hide">
+                  {platforms.length === 0 ? (
+                    <div className="text-sm">None available.</div>
+                  ) : (
+                    platforms.map((p) => (
+                      <div key={p.id} className="flex items-center space-x-3">
+                        <RadioGroupItem value={p.slug} id={`platform-${p.slug}`} />
+                        <Label htmlFor={`platform-${p.slug}`} className={`cursor-pointer font-normal capitalize ${(filters.platform || '').includes(p.slug) ? "text-primary font-bold" : ""}`}>
+                          {p.name}
+                        </Label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </RadioGroup>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Types */}
+          <AccordionItem value="types" className="border-none">
+            <AccordionTrigger className="hover:no-underline py-3 px-0 font-semibold text-sm cursor-pointer">
+              Type
+            </AccordionTrigger>
+            <AccordionContent>
+              <RadioGroup
+                value={filters.type || ''}
+                onValueChange={(val) => onChange({ ...filters, type: val })}
+                className="space-y-3 py-1 pl-1 max-h-48 overflow-y-auto scrollbar-hide">
+                <div className="text-sm text-muted-foreground space-y-3 py-1 pl-1 max-h-48 overflow-y-auto scrollbar-hide">
+                  {types.length === 0 ? (
+                    <div className="text-sm">None available.</div>
+                  ) : (
+                    types.map((t) => (
+                      <div key={t.id} className="flex items-center space-x-3">
+                        <RadioGroupItem value={t.slug} id={`type-${t.slug}`} />
+                        <Label htmlFor={`type-${t.slug}`} className={`cursor-pointer font-normal capitalize ${(filters.type || '').includes(t.slug) ? "text-primary font-bold" : ""}`}>
+                          {t.name}
+                        </Label>
+                      </div>
+                    ))
+                  )}
                 </div>
               </RadioGroup>
             </AccordionContent>
@@ -252,6 +312,8 @@ export default function StoreSidebarFilter({
               price_max: 9999,
               ordering: 'price',
               region: '',
+              platform: '',
+              type: '',
             });
           }}>
           Clear Filters
@@ -260,3 +322,4 @@ export default function StoreSidebarFilter({
     </div>
   );
 }
+

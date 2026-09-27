@@ -18,14 +18,17 @@ export function useAdminOrdersQuery(params: AdminOrderListParams) {
     queryKey: adminQueryKeys.orders(params),
     queryFn: async () => {
       const data = await orderService.adminOrdersList(params);
-      // Backend may wrap paginated payload inside data.status OR return it at the top level.
-      // Try data.status first (if it looks like a paginated object); fall back to data itself.
-      const payload: PaginatedOrdersResult =
-        data?.status && typeof data.status === 'object' && Array.isArray(data.status.results)
-          ? (data.status as PaginatedOrdersResult)
-          : (data as PaginatedOrdersResult);
-      return payload;
+      // // Backend may wrap paginated payload inside data.status OR return it at the top level.
+      // // Try data.status first (if it looks like a paginated object); fall back to data itself.
+      // const payload: PaginatedOrdersResult =
+      //   data?.status && typeof data.status === 'object' && Array.isArray(data.status.results)
+      //     ? (data.status as PaginatedOrdersResult)
+      //     : (data as PaginatedOrdersResult);
+      // return payload;
+      // After the Axios unwrapper fix, data is already the unwrapped paginated payload.
+      return data as PaginatedOrdersResult;
     },
     placeholderData: keepPreviousData,
   });
 }
+

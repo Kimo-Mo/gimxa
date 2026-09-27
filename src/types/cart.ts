@@ -22,4 +22,5 @@ export interface CartResponse {
   subtotal: string;
   discount: string;
   total_after_discount: string;
+  exchange_rate: string;
 }

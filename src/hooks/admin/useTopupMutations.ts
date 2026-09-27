@@ -15,8 +15,8 @@ export const useUpdateTopupGameInfoMutation = (slug: string) => {
 
   return useMutation({
     mutationFn: async ({ formData, isActive }: { formData: FormData; isActive: boolean }) => {
-      await dashboardService.adminUpdateProductFull(slug, formData);
-      return topupService.adminUpdateTopup(slug, { is_active: isActive });
+      formData.append('is_active', String(isActive));
+      return await dashboardService.adminUpdateProductFull(slug, formData);
     },
     onSuccess: async (data) => {
       await cacheClear();
@@ -131,6 +131,9 @@ export const useSaveTopupPackagesMutation = ({
         fd.append('name', pkg.name);
         fd.append('amount', pkg.amount);
         fd.append('price', pkg.price);
+        if (pkg.price_before_offer) fd.append('price_before_offer', pkg.price_before_offer);
+        if (pkg.offer_value) fd.append('offer_value', pkg.offer_value);
+        else fd.append('offer_value', '');
         fd.append('is_active', String(pkg.is_active));
         fd.append('is_popular', String(pkg.is_popular));
         fd.append('order', String(pkg.order));
@@ -140,6 +143,9 @@ export const useSaveTopupPackagesMutation = ({
         } else if (pkg.stock_mode === 'automatic') {
           // Send 0 to override/clear manual time
           fd.append('manual_fulfillment_time', '0');
+        }
+        if (pkg.imageFile) {
+          fd.append('image', pkg.imageFile);
         }
         fd.append('game', String(topupId));
 
@@ -205,3 +211,4 @@ export const useDeleteTopupItemMutation = (slug: string) => {
     },
   });
 };
+

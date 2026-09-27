@@ -23,6 +23,8 @@ export interface AdminTopupPackage {
   name: string;
   amount: string;
   price: string;
+  price_before_offer?: string | null;
+  offer_value?: string | null;
   image: string | null;
   is_active: boolean;
   is_popular: boolean;

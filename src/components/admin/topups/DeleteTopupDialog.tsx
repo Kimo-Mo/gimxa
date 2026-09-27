@@ -30,9 +30,9 @@ export function DeleteTopupDialog({
       }}>
       <AlertDialogContent className="bg-card border-border">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-foreground">Delete Top-Up Game?</AlertDialogTitle>
+          <AlertDialogTitle className="text-foreground">Delete Top Up Game?</AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
-            This will permanently delete this top-up game along with all its fields and packages.
+            This will permanently delete this top up game along with all its fields and packages.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

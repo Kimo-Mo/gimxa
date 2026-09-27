@@ -1,6 +1,6 @@
 'use client';
 
-import ProductGrid from '@/components/features/product/ProductGrid';
+import ProductSwiper from '@/components/features/product/ProductSwiper';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -13,9 +13,9 @@ export const PopularPcGames = () => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['popularGames', { categories: 'pc-games', is_popular: true, page_size: 4 }],
+    queryKey: ['popularGames', { categories: 'pc-games', is_popular: true, page_size: 12 }],
     queryFn: () =>
-      catalogService.advancedSearch({ categories: 'pc-games', is_popular: true, page_size: 4 }),
+      catalogService.advancedSearch({ categories: 'pc-games', is_popular: true, page_size: 12 }),
   });
 
   const products = pageData?.results;
@@ -33,7 +33,7 @@ export const PopularPcGames = () => {
         </Link>
       </div>
 
-      <ProductGrid products={products} isLoading={isLoading} error={error} limit={4} />
+      <ProductSwiper products={products} isLoading={isLoading} error={error} />
     </section>
   );
 };

@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+'use client';
+
+// No local state needed — all state is managed by parent pages
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -10,10 +13,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Save, X } from 'lucide-react';
-import type { ProductCategory } from '@/types/catalog';
-import Image from 'next/image';
+import { Loader2, Save } from 'lucide-react';
+import type { ProductCategory, Region, Platform, ProductTypeEntity } from '@/types/catalog';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
+import { AttributeCreateDialog } from '@/components/admin/products/AttributeCreateDialog';
+import { AttributeEditDialog } from '@/components/admin/products/AttributeEditDialog';
+import { ProductImages } from '@/components/admin/products/ProductImages';
+import type { ImageState } from '@/components/admin/products/types';
 import { getImageUrl } from '@/lib/utils';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[200px] w-full flex items-center justify-center border border-border rounded-md bg-muted/20">
+      Loading Editor...
+    </div>
+  ),
+});
 
 interface GameInfoTabProps {
   gameName: string;
@@ -23,22 +40,40 @@ interface GameInfoTabProps {
   categories: ProductCategory[];
   region: string;
   setRegion: (r: string) => void;
+  regions: Region[];
+  type: string;
+  setType: (t: string) => void;
+  types: ProductTypeEntity[];
+  platform: string;
+  setPlatform: (p: string) => void;
+  platforms: Platform[];
   shortDescription: string;
   setShortDescription: (d: string) => void;
-  imageFile: File | null;
-  setImageFile: (f: File | null) => void;
-  currentLogo: string | null;
+  description?: string;
+  setDescription?: (d: string) => void;
+  help: string;
+  setHelp: (v: string) => void;
+  // Images (replaces old single imageFile/currentLogo)
+  images: ImageState[];
+  handleImageAdd: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setMainImage: (index: number) => void;
+  removeImage: (index: number) => void;
+  isEditMode?: boolean;
+  imageError?: string;
   isActive: boolean;
   setIsActive: (a: boolean) => void;
   isAvailable: boolean;
   setIsAvailable: (a: boolean) => void;
   isFeatured: boolean;
   setIsFeatured: (f: boolean) => void;
+  isPopular?: boolean;
+  setIsPopular?: (v: boolean) => void;
   gameInfoErrors: Record<string, string>;
   setGameInfoErrors: (e: (prev: Record<string, string>) => Record<string, string>) => void;
   savingGameInfo?: boolean;
   handleSaveGameInfo?: () => void;
   hideSaveButton?: boolean;
+  isLoaded?: boolean;
 }
 
 export function GameInfoTab({
@@ -49,62 +84,48 @@ export function GameInfoTab({
   categories,
   region,
   setRegion,
+  regions,
+  type,
+  setType,
+  types,
+  platform,
+  setPlatform,
+  platforms,
   shortDescription,
   setShortDescription,
-  imageFile,
-  setImageFile,
-  currentLogo,
+  description,
+  setDescription,
+  help,
+  setHelp,
+  images,
+  handleImageAdd,
+  setMainImage,
+  removeImage,
+  isEditMode = false,
+  imageError,
   isActive,
   setIsActive,
   isAvailable,
   setIsAvailable,
   isFeatured,
   setIsFeatured,
+  isPopular,
+  setIsPopular,
   gameInfoErrors,
   setGameInfoErrors,
   savingGameInfo,
   handleSaveGameInfo,
   hideSaveButton,
+  isLoaded = true,
 }: GameInfoTabProps) {
-  const [imageError, setImageError] = useState<string | null>(null);
-  const localPreviewSrc = useMemo(
-    () => (imageFile ? URL.createObjectURL(imageFile) : null),
-    [imageFile]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (localPreviewSrc) URL.revokeObjectURL(localPreviewSrc);
-    };
-  }, [localPreviewSrc]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setImageFile(null);
-      setImageError('Please select a valid image file.');
-      e.target.value = '';
-      return;
-    }
-    setImageError(null);
-    setImageFile(file);
-  };
-
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setImageError(null);
-  };
-
-  const previewSrc = localPreviewSrc ?? (currentLogo ? getImageUrl(currentLogo) : null);
-
   return (
     <Card className="bg-card border-border shadow-sm">
       <CardHeader>
         <CardTitle className="text-foreground text-base">Game Information</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Game Name */}
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="game-name" className="text-foreground text-sm">
               Game Name *
@@ -127,8 +148,9 @@ export function GameInfoTab({
               <p className="text-xs text-destructive mt-0.5">{gameInfoErrors.name}</p>
             )}
           </div>
+          {/* Category */}
           <div className="space-y-1.5">
-            <Label htmlFor="category" className="text-foreground text-sm">
+            <Label htmlFor="topup-category" className="text-foreground text-sm">
               Category *
             </Label>
             <Select
@@ -142,7 +164,7 @@ export function GameInfoTab({
                 });
               }}>
               <SelectTrigger
-                id="category"
+                id="topup-category"
                 className={`bg-background ${gameInfoErrors.category ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}>
                 <SelectValue placeholder="Select…" />
               </SelectTrigger>
@@ -158,101 +180,218 @@ export function GameInfoTab({
               <p className="text-xs text-destructive mt-0.5">{gameInfoErrors.category}</p>
             )}
           </div>
+
+          {/* Region with create/edit dialogs */}
           <div className="space-y-1.5">
-            <Label htmlFor="region" className="text-foreground text-sm">
+            <Label htmlFor="topup-region" className="text-foreground text-sm">
               Region
             </Label>
-            <Select value={region} onValueChange={setRegion}>
-              <SelectTrigger id="region" className="bg-background border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="global">Global</SelectItem>
-                <SelectItem value="eu">Europe (EU)</SelectItem>
-                <SelectItem value="us">United States (US)</SelectItem>
-                <SelectItem value="mena">Middle East & Africa (MENA)</SelectItem>
-                <SelectItem value="latam">Latin America (LATAM)</SelectItem>
-                <SelectItem value="asia">Asia</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="game-image" className="text-foreground text-sm">
-              Game Logo / Image (Upload to change)
-            </Label>
-            <Input
-              id="game-image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className={`bg-background cursor-pointer text-sm ${imageError ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}
-            />
-            {imageError && <p className="text-xs text-destructive mt-0.5">{imageError}</p>}
-            {previewSrc && (
-              <div className="relative w-20 h-20 rounded-md overflow-hidden border border-border group">
-                <Image
-                  src={previewSrc}
-                  alt={gameName || 'topup'}
-                  width={80}
-                  height={80}
-                  className="object-cover w-20 h-20"
-                  unoptimized
+            <div className="flex gap-2">
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger id="topup-region" className="bg-background border-border flex-1">
+                  <SelectValue placeholder="Select region" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {regions?.map((r) => (
+                    <SelectItem key={r.id} value={r.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {r.logo && (
+                          <img src={getImageUrl(r.logo)} alt="" className="w-5 h-5 object-contain" />
+                        )}
+                        <span>{r.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {region && regions?.find((r) => r.id.toString() === region) && (
+                <AttributeEditDialog
+                  type="regions"
+                  item={regions.find((r) => r.id.toString() === region)!}
+                  onSuccess={setRegion}
                 />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white items-center justify-center hidden group-hover:flex">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
+              )}
+              <AttributeCreateDialog type="regions" onSuccess={setRegion} />
+            </div>
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="short-desc" className="text-foreground text-sm">
-              Short Description
+
+          {/* Type with create/edit dialogs */}
+          <div className="space-y-1.5">
+            <Label htmlFor="topup-type" className="text-foreground text-sm">
+              Type (Key/Account)
             </Label>
-            <Input
-              id="short-desc"
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-              placeholder="Brief description…"
-              className="bg-background border-border"
-            />
+            <div className="flex gap-2">
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger id="topup-type" className="bg-background border-border flex-1">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {types?.map((t) => (
+                    <SelectItem key={t.id} value={t.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {t.logo && (
+                          <img src={getImageUrl(t.logo)} alt="" className="w-5 h-5 object-contain" />
+                        )}
+                        <span>{t.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {type && types?.find((t) => t.id.toString() === type) && (
+                <AttributeEditDialog
+                  type="types"
+                  item={types.find((t) => t.id.toString() === type)!}
+                  onSuccess={setType}
+                />
+              )}
+              <AttributeCreateDialog type="types" onSuccess={setType} />
+            </div>
           </div>
-          <div className="sm:col-span-2 pt-2 mt-2">
-            <div className="flex flex-wrap gap-6 pt-2 border-t border-border">
-              {[
-                { id: 'is-active', label: 'Active', state: isActive, setState: setIsActive },
-                {
-                  id: 'is-available',
-                  label: 'Available for purchase',
-                  state: isAvailable,
-                  setState: setIsAvailable,
-                },
-                {
-                  id: 'is-featured',
-                  label: 'Featured Product',
-                  state: isFeatured,
-                  setState: setIsFeatured,
-                },
-              ].map(({ id, label, state, setState }) => (
-                <label
-                  key={id}
-                  htmlFor={id}
-                  className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    id={id}
-                    checked={state}
-                    onChange={(e) => setState(e.target.checked)}
-                    className="h-4 w-4 accent-primary text-primary border-border rounded focus:ring-primary/20 bg-background"
-                  />
-                  {label}
-                </label>
-              ))}
+
+          {/* Platform with create/edit dialogs */}
+          <div className="space-y-1.5">
+            <Label htmlFor="topup-platform" className="text-foreground text-sm">
+              Platform
+            </Label>
+            <div className="flex gap-2">
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger id="topup-platform" className="bg-background border-border flex-1">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {platforms?.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {p.logo && (
+                          <img src={getImageUrl(p.logo)} alt="" className="w-5 h-5 object-contain" />
+                        )}
+                        <span>{p.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {platform && platforms?.find((p) => p.id.toString() === platform) && (
+                <AttributeEditDialog
+                  type="platforms"
+                  item={platforms.find((p) => p.id.toString() === platform)!}
+                  onSuccess={setPlatform}
+                />
+              )}
+              <AttributeCreateDialog type="platforms" onSuccess={setPlatform} />
             </div>
           </div>
         </div>
+
+        {/* Short Description */}
+        <div className="space-y-1.5">
+          <Label htmlFor="topup-short-desc" className="text-foreground text-sm">
+            Short Description
+          </Label>
+          <Input
+            id="topup-short-desc"
+            value={shortDescription}
+            onChange={(e) => setShortDescription(e.target.value)}
+            placeholder="Brief description…"
+            className="bg-background border-border"
+            maxLength={500}
+          />
+        </div>
+
+        {/* Help Note */}
+        <div className="space-y-1.5">
+          <Label htmlFor="topup-help" className="text-foreground text-sm">
+            Help Note (Warning for users)
+          </Label>
+          <Textarea
+            id="topup-help"
+            value={help}
+            onChange={(e) => setHelp(e.target.value)}
+            placeholder="e.g. This top-up is only available for accounts in MENA region."
+            className="bg-background border-border min-h-[80px]"
+          />
+        </div>
+
+        {/* Description (Rich Text) */}
+        {setDescription && (
+          <div className="space-y-1.5 pb-8">
+            <Label htmlFor="topup-long-desc" className="text-foreground text-sm">
+              Description
+            </Label>
+            <div className="bg-background [&_.ql-container]:min-h-[200px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[200px]">
+              {isLoaded ? (
+                <ReactQuill
+                  theme="snow"
+                  value={description || ''}
+                  onChange={setDescription}
+                  placeholder="Full description of the game / top-up product…"
+                />
+              ) : (
+                <div className="h-[200px] w-full flex items-center justify-center border border-border rounded-md bg-muted/20 text-muted-foreground text-sm">
+                  Loading editor…
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Checkboxes */}
+        <div className="flex flex-wrap gap-6 pt-2 border-t border-border">
+          {[
+            { id: 'topup-is-active', label: 'Active', state: isActive, setState: setIsActive },
+            {
+              id: 'topup-is-available',
+              label: 'Available for purchase',
+              state: isAvailable,
+              setState: setIsAvailable,
+            },
+            ...(setIsPopular
+              ? [
+                  {
+                    id: 'topup-is-popular',
+                    label: 'Mark as Popular',
+                    state: isPopular ?? false,
+                    setState: setIsPopular,
+                  },
+                ]
+              : []),
+            {
+              id: 'topup-is-featured',
+              label: 'Featured Product',
+              state: isFeatured,
+              setState: setIsFeatured,
+            },
+          ].map(({ id, label, state, setState }) => (
+            <label
+              key={id}
+              htmlFor={id}
+              className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
+              <input
+                type="checkbox"
+                id={id}
+                checked={state}
+                onChange={(e) => setState(e.target.checked)}
+                className="h-4 w-4 accent-primary text-primary border-border rounded focus:ring-primary/20 bg-background"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+
+        {/* Product Images section */}
+        <div className="pt-4 border-t border-border">
+          <ProductImages
+            images={images}
+            handleImageAdd={handleImageAdd}
+            setMainImage={setMainImage}
+            removeImage={removeImage}
+            isEditMode={isEditMode}
+            imageError={imageError}
+          />
+        </div>
+
+        {/* Save button (edit mode) */}
         {!hideSaveButton && handleSaveGameInfo && (
           <div className="flex justify-end pt-2">
             <Button

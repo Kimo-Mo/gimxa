@@ -122,7 +122,7 @@ export function SendNotificationDialog({ open, onOpenChange }: SendNotificationD
           {watchedEmailType === 'code_sent' && (
             <div className="space-y-2">
               <Label htmlFor="code">Code (Optional)</Label>
-              <Input id="code" {...register('code')} placeholder="Game key or top-up code" />
+              <Input id="code" {...register('code')} placeholder="Game key or top up code" />
               {errors.code && <p className="text-destructive text-sm">{errors.code.message}</p>}
             </div>
           )}

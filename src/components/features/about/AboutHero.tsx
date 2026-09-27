@@ -14,7 +14,7 @@ export const AboutHero = () => {
           Level Up Your <span className="text-primary">Digital Experience</span>
         </h1>
         <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-          Gimxa is your ultimate destination for instant game top-ups, digital gift cards, and
+          Gimxa is your ultimate destination for instant game top up, digital gift cards, and
           premium software keys. We bridge the gap between gamers and their favorite experiences.
         </p>
       </div>

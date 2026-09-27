@@ -1,4 +1,4 @@
-import { TopUp} from '@/types';
+import { TopUp } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
@@ -36,7 +36,7 @@ export const TopUpCard = ({ item }: { item: TopUp }) => {
           </p>
           <div className="mt-auto">
             <Button className="w-full cursor-pointer" variant="default">
-              Top Up Now
+              Order Now
             </Button>
           </div>
         </div>

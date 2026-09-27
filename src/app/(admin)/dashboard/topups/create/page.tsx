@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Zap } from 'lucide-react';
 import { topupService } from '@/services/topup.service';
 import { dashboardService } from '@/services/dashboard.service';
-import { catalogService } from '@/services/catalog.service';
 import { codeService } from '@/services/code.service';
 import { toast } from 'sonner';
 import type { ProductCategory } from '@/types/catalog';
@@ -18,6 +17,16 @@ import { GameInfoTab } from '@/components/admin/topups/GameInfoTab';
 import { FieldsTab } from '@/components/admin/topups/FieldsTab';
 import { PackagesTab } from '@/components/admin/topups/PackagesTab';
 import type { FieldForm, PackageForm } from '@/components/admin/topups/types';
+import type { AttributeRow, ImageState } from '@/components/admin/products/types';
+import { ProductAttributes } from '@/components/admin/products/ProductAttributes';
+import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
+import { useCreateTagMutation, useDeleteTagMutation } from '@/hooks/admin/useTagMutations';
+import { ProductTags } from '@/components/admin/products/ProductTags';
+import type { ProductTag } from '@/types/catalog';
+import { useCategoriesQuery } from '@/hooks/admin/useCategoriesQuery';
+import { useRegionsQuery } from '@/hooks/admin/useRegionsQuery';
+import { useTypesQuery } from '@/hooks/admin/useTypesQuery';
+import { usePlatformsQuery } from '@/hooks/admin/usePlatformsQuery';
 
 const defaultField = (): FieldForm => ({
   title: '',
@@ -34,6 +43,8 @@ const defaultPackage = (): PackageForm => ({
   name: '',
   amount: '',
   price: '',
+  price_before_offer: '',
+  offer_value: '',
   is_active: true,
   is_popular: false,
   order: 0,
@@ -45,34 +56,107 @@ const defaultPackage = (): PackageForm => ({
 export default function AdminTopupCreatePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const imagesRef = useRef<ImageState[]>([]);
 
   // Product info
   const [gameName, setGameName] = useState('');
-  const [region, setRegion] = useState('global');
+  const [region, setRegion] = useState('');
+  const [type, setType] = useState('');
+  const [platform, setPlatform] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [shortDescription, setShortDescription] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [description, setDescription] = useState('');
+  const [help, setHelp] = useState('');
+
+  // Images
+  const [images, setImages] = useState<ImageState[]>([]);
+
+  const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const acceptedFiles = files.filter((f) => f.type.startsWith('image/'));
+    if (acceptedFiles.length === 0) { e.target.value = ''; return; }
+    setImages((prev) => [
+      ...prev,
+      ...acceptedFiles.map((file, i) => ({
+        file,
+        url: URL.createObjectURL(file),
+        isMain: prev.length === 0 && i === 0,
+      })),
+    ]);
+    e.target.value = '';
+  };
+
+  const setMainImage = (index: number) => {
+    setImages((prev) => prev.map((img, i) => ({ ...img, isMain: i === index })));
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => {
+      const removed = prev[index];
+      if (removed?.file && removed.url.startsWith('blob:')) URL.revokeObjectURL(removed.url);
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length > 0 && !next.some((img) => img.isMain)) next[0].isMain = true;
+      return next;
+    });
+  };
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach((img) => {
+        if (img.file && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      });
+    };
+  }, []);
 
   const [isActive, setIsActive] = useState(true);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isPopular, setIsPopular] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
 
-  useEffect(() => {
-    catalogService
-      .adminCategoriesList()
-      .then((data) => {
-        const topupCategories = (Array.isArray(data) ? data : (data?.results ?? [])).filter(
-          (category: ProductCategory) => category.name.startsWith('Topup')
-        );
-        setCategories(topupCategories);
-      })
-      .catch(() => []);
-  }, []);
+  // Tags
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [newTagInput, setNewTagInput] = useState('');
+
+  const tagsQuery = useTagsQuery();
+  const createTagMutation = useCreateTagMutation();
+  const deleteTagMutation = useDeleteTagMutation();
+  const categoriesQuery = useCategoriesQuery();
+  const regionsQuery = useRegionsQuery();
+  const typesQuery = useTypesQuery();
+  const platformsQuery = usePlatformsQuery();
+
+  const tags = tagsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const regions = regionsQuery.data ?? [];
+  const types = typesQuery.data ?? [];
+  const platforms = platformsQuery.data ?? [];
+
+  const handleAddNewTag = () => {
+    if (!newTagInput.trim()) return;
+    createTagMutation.mutate(newTagInput.trim(), {
+      onSuccess: (data) => {
+        setNewTagInput('');
+        setSelectedTags((prev) => [...prev, data.id]);
+        toast.success(`Tag "${data.name}" created.`);
+      },
+      onError: () => toast.error('Failed to create tag.'),
+    });
+  };
+
+  const toggleTag = (id: number) => {
+    setSelectedTags((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  };
 
   // Fields & Packages
   const [fields, setFields] = useState<FieldForm[]>([defaultField()]);
   const [packages, setPackages] = useState<PackageForm[]>([defaultPackage()]);
+  const [attributes, setAttributes] = useState<AttributeRow[]>([]);
 
   // Inline validation errors
   const [gameInfoErrors, setGameInfoErrors] = useState<Record<string, string>>({});
@@ -97,6 +181,13 @@ export default function AdminTopupCreatePage() {
   const updatePackage = (i: number, key: keyof PackageForm, value: unknown) =>
     setPackages((prev) => prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)));
 
+  // ── Attribute helpers ──────────────────────────────────────────────
+  const addAttribute = () => setAttributes((prev) => [...prev, { name: '', value: '' }]);
+  const removeAttribute = (i: number) => setAttributes((prev) => prev.filter((_, idx) => idx !== i));
+  const updateAttribute = (i: number, field: keyof AttributeRow, value: string) => {
+    setAttributes((prev) => prev.map((a, idx) => (idx === i ? { ...a, [field]: value } : a)));
+  };
+
   // ── Validation ─────────────────────────────────────────────────────
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -115,7 +206,7 @@ export default function AdminTopupCreatePage() {
       const e: Record<string, string> = {};
       if (!p.name.trim()) e.name = 'Name is required.';
       if (!p.amount.trim()) e.amount = 'Amount is required.';
-      if (!p.price || parseFloat(p.price) <= 0) e.price = 'Price must be greater than 0.';
+      if (!p.price_before_offer || parseFloat(p.price_before_offer) <= 0) e.price_before_offer = 'Price before offer must be greater than 0.';
       if (p.stock_mode === 'manual' && !p.manual_fulfillment_time)
         e.manual_fulfillment_time = 'Fulfillment time is required for manual mode.';
       if (p.stock_mode === 'automatic' && (!p.codes || !p.codes.trim()))
@@ -152,31 +243,52 @@ export default function AdminTopupCreatePage() {
       productFormData.append('product_type', 'topup');
       productFormData.append('stock_mode', 'manual');
       productFormData.append('manual_fulfillment_time', '5');
-      productFormData.append('region', region);
+      if (region) productFormData.append('region', region);
+      if (type) productFormData.append('type', type);
+      if (platform) productFormData.append('platform', platform);
       if (selectedCategory) productFormData.append('category', selectedCategory);
       if (shortDescription.trim())
         productFormData.append('short_description', shortDescription.trim());
-      if (imageFile) {
-        productFormData.append('logo', imageFile);
-        productFormData.append('images[0][image]', imageFile);
-        productFormData.append('images[0][is_main]', 'true');
-      }
+      if (description.trim())
+        productFormData.append('description', description.trim());
+      if (help.trim())
+        productFormData.append('help', help.trim());
+
+      // Images
+      images.forEach((img, i) => {
+        if (img.file) {
+          productFormData.append(`images[${i}][image]`, img.file);
+          productFormData.append(`images[${i}][is_main]`, String(img.isMain));
+          // Use first image as logo too
+          if (img.isMain) {
+            productFormData.append('logo', img.file);
+          }
+        }
+      });
+
+      productFormData.append('is_active', String(isActive));
       productFormData.append('is_available', String(isAvailable));
+      productFormData.append('is_popular', String(isPopular));
       productFormData.append('is_featured', String(isFeatured));
+
+      attributes.forEach((attr, i) => {
+        productFormData.append(`attributes[${i}][name]`, attr.name);
+        productFormData.append(`attributes[${i}][value]`, attr.value);
+      });
+
+      selectedTags.forEach((tagId) => {
+        productFormData.append('tags', String(tagId));
+      });
 
       const productResult = await dashboardService.adminCreateProductFull(productFormData);
       const productSlug: string = productResult?.slug ?? '';
       if (!productSlug) throw new Error('Product creation failed — no slug returned.');
 
-      setStep('Creating top-up game…');
+      setStep('Creating top up game…');
       const gameData = await topupService.adminTopupDetail(productSlug);
       topupGameId = gameData?.id ?? 0;
 
-      if (!topupGameId) throw new Error('TopUp game not found after product creation.');
-
-      if (!isActive) {
-        await topupService.adminUpdateTopup(productSlug, { is_active: isActive });
-      }
+      if (!topupGameId) throw new Error('Top up game not found after product creation.');
 
       if (fields.some((f) => f.title)) {
         setStep('Saving fields…');
@@ -215,7 +327,7 @@ export default function AdminTopupCreatePage() {
       if (packages.some((p) => p.name || p.price)) {
         setStep('Saving packages…');
         const pkgCodesTasks: { codes: string; package_id: string }[] = [];
-        
+
         for (const pkg of packages) {
           if (!pkg.name.trim() || !pkg.price) continue;
           const pkgFd = new FormData();
@@ -223,20 +335,24 @@ export default function AdminTopupCreatePage() {
           pkgFd.append('name', pkg.name);
           pkgFd.append('amount', pkg.amount);
           pkgFd.append('price', pkg.price);
+          if (pkg.price_before_offer) pkgFd.append('price_before_offer', pkg.price_before_offer);
+          if (pkg.offer_value) pkgFd.append('offer_value', pkg.offer_value);
+          else pkgFd.append('offer_value', '');
           pkgFd.append('stock_mode', pkg.stock_mode);
           pkgFd.append('is_active', String(pkg.is_active));
           pkgFd.append('is_popular', String(pkg.is_popular));
           pkgFd.append('order', String(pkg.order));
           if (pkg.stock_mode === 'manual' && pkg.manual_fulfillment_time)
             pkgFd.append('manual_fulfillment_time', pkg.manual_fulfillment_time);
-            
+          if (pkg.imageFile) pkgFd.append('image', pkg.imageFile);
+
           const result = await topupService.adminAddPackage(pkgFd);
-          
+
           if (pkg.stock_mode === 'automatic' && pkg.codes.trim() && result?.id) {
             pkgCodesTasks.push({ codes: pkg.codes, package_id: String(result.id) });
           }
         }
-        
+
         if (pkgCodesTasks.length > 0) {
           setStep('Attaching codes to packages…');
           try {
@@ -250,7 +366,7 @@ export default function AdminTopupCreatePage() {
         }
       }
 
-      toast.success('Top-up game created successfully!');
+      toast.success('Top up game created successfully!');
       await authService.clearCache();
       queryClient.invalidateQueries({ queryKey: ['admin', 'topups'] });
       router.push(`/dashboard/topups`);
@@ -288,7 +404,7 @@ export default function AdminTopupCreatePage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
-            Add Top-Up Game
+            Add Top Up Game
           </h1>
           <p className="text-muted-foreground mt-1">
             Fill in the details, fields, and packages — all in one step.
@@ -305,20 +421,61 @@ export default function AdminTopupCreatePage() {
           categories={categories}
           region={region}
           setRegion={setRegion}
+          regions={regions}
+          type={type}
+          setType={setType}
+          types={types}
+          platform={platform}
+          setPlatform={setPlatform}
+          platforms={platforms}
           shortDescription={shortDescription}
           setShortDescription={setShortDescription}
-          imageFile={imageFile}
-          setImageFile={setImageFile}
-          currentLogo={null}
+          description={description}
+          setDescription={setDescription}
+          help={help}
+          setHelp={setHelp}
+          images={images}
+          handleImageAdd={handleImageAdd}
+          setMainImage={setMainImage}
+          removeImage={removeImage}
           isActive={isActive}
           setIsActive={setIsActive}
           isAvailable={isAvailable}
           setIsAvailable={setIsAvailable}
+          isPopular={isPopular}
+          setIsPopular={setIsPopular}
           isFeatured={isFeatured}
           setIsFeatured={setIsFeatured}
           gameInfoErrors={gameInfoErrors}
           setGameInfoErrors={setGameInfoErrors}
           hideSaveButton={true}
+        />
+
+        <ProductAttributes
+          attributes={attributes}
+          addAttribute={addAttribute}
+          updateAttribute={updateAttribute}
+          removeAttribute={removeAttribute}
+        />
+
+        <ProductTags
+          tags={tags}
+          selectedTags={selectedTags}
+          newTagInput={newTagInput}
+          setNewTagInput={setNewTagInput}
+          addingTag={createTagMutation.isPending}
+          handleAddNewTag={handleAddNewTag}
+          toggleTag={toggleTag}
+          onDeleteTag={(tag) =>
+            deleteTagMutation.mutate(tag.slug, {
+              onSuccess: () => setSelectedTags((prev) => prev.filter((t) => t !== tag.id)),
+            })
+          }
+          deletingTagId={
+            deleteTagMutation.isPending && typeof deleteTagMutation.variables === 'string'
+              ? tags.find((t) => t.slug === deleteTagMutation.variables)?.id ?? null
+              : null
+          }
         />
 
         <FieldsTab
@@ -327,7 +484,7 @@ export default function AdminTopupCreatePage() {
           updateField={updateField}
           removeFieldLocally={removeFieldLocally}
           handleDeleteHelp={handleDeleteHelp}
-          setDeleteTarget={() => {}}
+          setDeleteTarget={() => { }}
           fieldErrors={fieldErrors}
           setFieldErrors={setFieldErrors}
           hideSaveButton={true}
@@ -338,7 +495,7 @@ export default function AdminTopupCreatePage() {
           addPackage={addPackage}
           updatePackage={updatePackage}
           removePackageLocally={removePackageLocally}
-          setDeleteTarget={() => {}}
+          setDeleteTarget={() => { }}
           pkgErrors={pkgErrors}
           setPkgErrors={setPkgErrors}
           hideSaveButton={true}
@@ -355,7 +512,7 @@ export default function AdminTopupCreatePage() {
                 {step || 'Saving…'}
               </>
             ) : (
-              'Create Top-Up Game'
+              'Create Top Up Game'
             )}
           </Button>
         </div>

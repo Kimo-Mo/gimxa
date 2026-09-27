@@ -14,6 +14,7 @@ export const adminQueryKeys = {
   categories: () => ['admin', 'categories'] as const,
   tags: () => ['admin', 'tags'] as const,
   orders: (params: AdminOrderListParams) => ['admin', 'orders', params] as const,
+  orderStats: () => ['admin', 'orderStats'] as const,
   order: (id: string) => ['admin', 'order', id] as const,
   users: (params: UserListParams) => ['admin', 'users', params] as const,
   user: (id: string) => ['admin', 'user', id] as const,

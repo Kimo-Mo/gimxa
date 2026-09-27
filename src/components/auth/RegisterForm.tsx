@@ -8,6 +8,7 @@ import z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/services/auth.service';
+import axios from 'axios';
 
 const registerSchema = z
   .object({
@@ -28,6 +29,10 @@ const registerSchema = z
     }
   );
 
+type RegisterFields = z.infer<typeof registerSchema>;
+
+const FIELD_NAMES: Array<keyof RegisterFields> = ['username', 'email', 'password', 'confirm_password'];
+
 export const RegisterForm = ({
   setCurrentState,
   onClose
@@ -39,8 +44,9 @@ export const RegisterForm = ({
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
-  } = useForm<z.infer<typeof registerSchema>>({
+  } = useForm<RegisterFields>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       username: '',
@@ -53,7 +59,9 @@ export const RegisterForm = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
-  const submitForm = async (data: z.infer<typeof registerSchema>) => {
+
+  const submitForm = async (data: RegisterFields) => {
+    setServerError('');
     try {
       setLoading(true);
       await authService.register({ ...data });
@@ -61,11 +69,56 @@ export const RegisterForm = ({
       setCurrentState('verify-otp');
     } catch (error) {
       console.error(error);
-      setServerError('Something went wrong try again later');
+
+      // Handle Axios errors with a response (4xx / 5xx)
+      if (axios.isAxiosError(error) && error.response) {
+        const statusCode = error.response.status;
+        const responseData = error.response.data;
+
+        if (statusCode === 400 && responseData && typeof responseData === 'object') {
+          // Map field-level errors returned by DRF onto the form fields
+          let hasFieldError = false;
+
+          FIELD_NAMES.forEach((field) => {
+            if (field in responseData) {
+              const messages: string[] = Array.isArray(responseData[field])
+                ? responseData[field]
+                : [String(responseData[field])];
+              setError(field, { type: 'server', message: messages[0] });
+              hasFieldError = true;
+            }
+          });
+
+          // Show non-field error in top banner
+          const nonField =
+            responseData.error ||
+            responseData.detail ||
+            (Array.isArray(responseData.non_field_errors) ? responseData.non_field_errors[0] : null);
+
+          if (nonField) {
+            setServerError(String(nonField));
+          } else if (!hasFieldError) {
+            setServerError('Something went wrong. Please check your input and try again.');
+          }
+          return;
+        }
+
+        // 4xx non-validation errors (e.g. 429 rate-limit)
+        if (statusCode < 500) {
+          const msg =
+            responseData?.error || responseData?.detail || 'Request failed. Please try again.';
+          setServerError(String(msg));
+          return;
+        }
+      }
+
+      // 5xx / network / unexpected
+      setServerError('Something went wrong. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <>
       <form onSubmit={handleSubmit(submitForm)} className="flex flex-col gap-4 ">
@@ -78,6 +131,7 @@ export const RegisterForm = ({
             type="text"
             className="w-full h-10 px-4 border rounded-2xl"
             placeholder="Enter your Username"
+            aria-invalid={!!errors.username}
             {...register('username')}
             name="username"
           />
@@ -89,6 +143,7 @@ export const RegisterForm = ({
             type="email"
             className="w-full h-10 px-4 border rounded-2xl"
             placeholder="Enter your Email"
+            aria-invalid={!!errors.email}
             {...register('email')}
             name="email"
           />
@@ -101,6 +156,7 @@ export const RegisterForm = ({
               type={showPassword ? 'text' : 'password'}
               className="w-full h-10 px-4 pr-10 border rounded-2xl"
               placeholder="Enter your Password"
+              aria-invalid={!!errors.password}
               {...register('password')}
               name="password"
             />
@@ -122,6 +178,7 @@ export const RegisterForm = ({
               type={showConfirmPassword ? 'text' : 'password'}
               className="w-full h-10 px-4 pr-10 border rounded-2xl"
               placeholder="Confirm Password"
+              aria-invalid={!!errors.confirm_password}
               {...register('confirm_password')}
               name="confirm_password"
             />
@@ -166,3 +223,5 @@ export const RegisterForm = ({
     </>
   );
 };
+
+

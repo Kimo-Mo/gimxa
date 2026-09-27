@@ -4,6 +4,7 @@ export interface TopUpProduct extends Product {
   id: number;
   name: string;
   slug: string;
+  images?: { id: number; image: string; is_main: boolean }[];
   main_image: { image: string , is_main: boolean, id: number} | null;
   logo: string | null;
   product_type: ProductType;
@@ -13,8 +14,11 @@ export interface TopUpPackage {
   id: number;
   name: string;
   price: number;
+  price_before_offer?: number | null;
+  offer_value?: string | null;
   currency: string;
   amount: string;
+  image?: string | null;
 }
 
 export interface TopUp {
@@ -65,3 +69,4 @@ export interface ValidateTopupPayload {
   product_slug: string;
   data: Record<string, string | number>;
 }
+

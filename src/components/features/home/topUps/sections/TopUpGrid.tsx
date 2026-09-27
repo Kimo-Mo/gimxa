@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { TopUpCard } from '../TopUpCard';
+import ProductCard from '@/components/features/product/ProductCard';
 import { Skeleton } from '@/components/ui';
 import { TopUp } from '@/types';
 import { topupService } from '@/services/topup.service';
@@ -25,16 +25,16 @@ export const TopUpGrid = ({ searchQuery, selectedCategory }: TopUpGridProps) => 
       ? pageData?.results
       : searchQuery.trim() !== ''
         ? pageData?.results.filter((item: TopUp) =>
-            item.product.name.toLowerCase().includes(searchQuery.toLowerCase())
-          )
+          item.product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
         : pageData?.results.filter((item: TopUp) =>
-            item.product.categories.find((category) => category.slug === selectedCategory)
-          );
+          item.product.categories.find((category) => category.slug === selectedCategory)
+        );
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-8">
         {[...Array(8)].map((_, i) => (
-          <Skeleton key={i} className="aspect-square w-full rounded-2xl" />
+          <Skeleton key={i} className="aspect-[16/10] w-full rounded-2xl" />
         ))}
       </div>
     );
@@ -43,10 +43,10 @@ export const TopUpGrid = ({ searchQuery, selectedCategory }: TopUpGridProps) => 
   if (error || filteredData?.length === 0) {
     return (
       <div className="py-20 flex flex-col items-center justify-center text-center">
-        <h3 className="text-2xl font-bold mb-2">No top-ups found</h3>
+        <h3 className="text-2xl font-bold mb-2">No top up found</h3>
         <p className="text-muted-foreground max-w-md">
           {error
-            ? 'An error occurred while loading top-ups.'
+            ? 'An error occurred while loading top up.'
             : 'Try adjusting your filters or search query.'}
         </p>
       </div>
@@ -56,7 +56,7 @@ export const TopUpGrid = ({ searchQuery, selectedCategory }: TopUpGridProps) => 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-8">
       {filteredData.map((item: TopUp) => (
-        <TopUpCard key={item.id} item={item} />
+        <ProductCard key={item.id} product={{ ...item.product, price: Number(item.start_from || item.product.price), currency: item.currency }} />
       ))}
     </div>
   );

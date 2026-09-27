@@ -30,6 +30,10 @@ export const orderService = {
     const { data } = await api.get('/orders/admin/all', { params });
     return data;
   },
+  adminOrdersStats: async () => {
+    const { data } = await api.get('/orders/admin/stats/');
+    return data;
+  },
   adminOrderDetails: async (id: string) => {
     const { data } = await api.get(`/orders/admin/${id}`);
     return data;

@@ -15,11 +15,11 @@ export function NotificationBell() {
 
   return (
     <NotificationPopover isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Button variant="secondary" size="icon" className="relative" aria-label="Notifications">
-        <Bell size={18} />
+      <Button variant="secondary" size="icon" className="relative !h-8 !w-8 md:!h-9 md:!w-9 rounded-full" aria-label="Notifications">
+        <Bell className="size-4 md:size-[18px]" />
         {count > 0 && (
           <Badge
-            className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+            className="absolute -top-2 -right-2 h-4 w-4 md:h-5 md:w-5 flex items-center justify-center p-0 text-[9px] md:text-[10px]"
             variant="default"
           >
             {count}

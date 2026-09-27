@@ -10,6 +10,7 @@ import {
   PopularConsoleGames,
   TrustSignals,
   ExploreByRegion,
+  ExploreByPlatform,
 } from './sections';
 
 export const DigitalProducts = () => {
@@ -18,7 +19,7 @@ export const DigitalProducts = () => {
       {/* Top Grid Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Hero Slider */}
-        <div className="lg:col-span-2 relative min-h-70 md:h-auto">
+        <div className="lg:col-span-2 relative h-full">
           <HeroSlider />
         </div>
 
@@ -39,9 +40,10 @@ export const DigitalProducts = () => {
       {/* Popular Games Section */}
       <PopularPcGames />
 
-      {/* Trust Signals Section */}
-      <TrustSignals />
+      {/* Explore By Platform Section */}
+      <ExploreByPlatform />
 
+      {/* Popular Console Games */}
       <PopularConsoleGames />
 
       {/* Explore By Category Section */}
@@ -50,11 +52,14 @@ export const DigitalProducts = () => {
       {/* Best Selling Gift Cards Section */}
       <PopularGiftCards />
 
-      {/* Explore By Platform Section */}
+      {/* Explore By Region Section */}
       <ExploreByRegion />
 
       {/* Best Selling Subscriptions Section */}
       <PopularSubscriptions />
+
+      {/* Trust Signals Section */}
+      <TrustSignals />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import ProductGrid from '@/components/features/product/ProductGrid';
+import ProductSwiper from '@/components/features/product/ProductSwiper';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -15,13 +15,13 @@ export const PopularSubscriptions = () => {
   } = useQuery({
     queryKey: [
       'popularSubscriptions',
-      { categories: 'subscriptions', is_popular: true, page_size: 4 },
+      { categories: 'subscriptions', is_popular: true, page_size: 12 },
     ],
     queryFn: () =>
       catalogService.advancedSearch({
         categories: 'subscriptions',
         is_popular: true,
-        page_size: 4,
+        page_size: 12,
       }),
   });
 
@@ -42,7 +42,7 @@ export const PopularSubscriptions = () => {
         </Link>
       </div>
 
-      <ProductGrid products={products} isLoading={isLoading} error={error} limit={4} />
+      <ProductSwiper products={products} isLoading={isLoading} error={error} />
     </section>
   );
 };

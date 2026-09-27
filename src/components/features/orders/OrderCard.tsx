@@ -37,7 +37,7 @@ export function OrderCard({ order, onViewDetails }: OrderCardProps) {
             </div>
           </div>
           <div className="rounded-lg border border-border/60 bg-background/50 p-3">
-            <p className="mb-1 text-xs text-muted-foreground">Subtotal</p>
+            <p className="mb-1 text-xs text-muted-foreground">Subtotal before fee</p>
             <div className="flex items-center gap-1.5">
               <Wallet className="size-3.5 text-primary" />
               <span>{order.currency} {order.subtotal}</span>
@@ -55,7 +55,7 @@ export function OrderCard({ order, onViewDetails }: OrderCardProps) {
 
         <div className="flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold">
-            Total Price: <span className="text-primary">{order.currency} {order.total_price}</span>
+            Total Price after fee: <span className="text-primary">{order.currency} {order.total_price}</span>
           </p>
           <div className="flex flex-wrap gap-2">
             <CancelOrderButton orderNumber={order.order_number} status={order.status} />

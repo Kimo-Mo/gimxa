@@ -31,7 +31,7 @@ export function TopupListFilters({
     <CardHeader className="pb-4">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <CardTitle className="text-foreground">
-          Top-Up Games{' '}
+          Top Up Games{' '}
           {paginationCount > 0 && (
             <span className="text-muted-foreground font-normal text-sm ml-1">
               ({paginationCount})
@@ -43,7 +43,7 @@ export function TopupListFilters({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="topups-search"
-              placeholder="Search top-ups…"
+              placeholder="Search top up games…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-background border-border h-9 text-sm"

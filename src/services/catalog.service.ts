@@ -47,6 +47,18 @@ export const catalogService = {
     const { data } = await api.get('/catalog/public/tags/');
     return data;
   },
+  publicRegionsList: async () => {
+    const { data } = await api.get('/catalog/public/regions/');
+    return data;
+  },
+  publicPlatformsList: async () => {
+    const { data } = await api.get('/catalog/public/platforms/');
+    return data;
+  },
+  publicTypesList: async () => {
+    const { data } = await api.get('/catalog/public/types/');
+    return data;
+  },
   publicProductsList: async (
     params?: Record<string, string | number | boolean>
   ): Promise<PaginatedResponse<Product>> => {
@@ -57,6 +69,12 @@ export const catalogService = {
   },
   publicProductDetail: async (slug: string): Promise<Product> => {
     const { data } = await api.get<Product>(`/catalog/public/products/${slug}/`);
+    return data;
+  },
+  publicRelatedProducts: async (slug: string, page = 1): Promise<PaginatedResponse<Product>> => {
+    const { data } = await api.get<PaginatedResponse<Product>>(`/catalog/public/products/${slug}/related/`, {
+      params: { page }
+    });
     return data;
   },
 

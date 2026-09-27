@@ -13,10 +13,11 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CreditCard, Users, ArrowRight, Package, Home, Zap } from 'lucide-react';
+import { CreditCard, Users, ArrowRight, Package, Home, Zap, Clock, TrendingUp } from 'lucide-react';
 
 import { OrderStatusBadge } from '@/components/admin/orders/OrderStatusBadge';
 import { useAdminOrdersQuery } from '@/hooks/admin/useAdminOrdersQuery';
+import { useAdminOrderStatsQuery } from '@/hooks/admin/useAdminOrderStatsQuery';
 import { useProductsQuery } from '@/hooks/admin/useProductsQuery';
 import { useAdminUsersQuery } from '@/hooks/admin/useAdminUsersQuery';
 import { useTopupsQuery } from '@/hooks/admin/useTopupsQuery';
@@ -66,6 +67,11 @@ export default function AdminDashboardPage() {
   const { data: usersData, isPending: LoadingUsers } = useAdminUsersQuery({ page: 1, search: '' });
   const totalUsers = usersData?.count ?? null;
 
+  const { data: statsData, isPending: LoadingStats } = useAdminOrderStatsQuery();
+  const profit = statsData?.profit ?? null;
+  const completedCount = statsData?.completed_count ?? 0;
+  const pendingCount = statsData?.pending_count ?? null;
+
   const stats = [
     {
       title: 'Total Orders',
@@ -89,11 +95,25 @@ export default function AdminDashboardPage() {
       href: '/dashboard/products',
     },
     {
-      title: 'Total Top-Ups',
+      title: 'Total Top Up',
       value: totalTopUps,
       icon: Zap,
-      sub: 'All time top-ups',
+      sub: 'All time top up',
       href: '/dashboard/topups',
+    },
+    {
+      title: 'Profit',
+      value: profit !== null ? `$ ${parseFloat(profit as any).toFixed(2)}` : null,
+      icon: TrendingUp,
+      sub: `${completedCount} completed orders`,
+      href: '/dashboard/orders',
+    },
+    {
+      title: 'Pending Orders',
+      value: pendingCount,
+      icon: Clock,
+      sub: 'Orders waiting to be processed',
+      href: '/dashboard/orders',
     },
   ];
 
@@ -114,32 +134,32 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {LoadingOrders || LoadingProducts || LoadingUsers || LoadingTopUps
-          ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {LoadingOrders || LoadingProducts || LoadingUsers || LoadingTopUps || LoadingStats
+          ? Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)
           : stats.map((stat) => (
-              <Card key={stat.title} className="bg-card border-border shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">
-                    {stat.value !== null ? stat.value.toLocaleString() : '—'}
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-muted-foreground">{stat.sub}</p>
-                    {stat.href && (
-                      <Link href={stat.href}>
-                        <ArrowRight className="h-5 w-5 text-primary cursor-pointer" />
-                      </Link>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <Card key={stat.title} className="bg-card border-border shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {stat.value !== null ? (typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value) : '—'}
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">{stat.sub}</p>
+                  {stat.href && (
+                    <Link href={stat.href}>
+                      <ArrowRight className="h-5 w-5 text-primary cursor-pointer" />
+                    </Link>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
       </div>
 
       {/* Recent Orders */}

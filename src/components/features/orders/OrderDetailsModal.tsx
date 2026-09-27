@@ -150,11 +150,11 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
                   <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                     <p>Quantity: {item.quantity}</p>
                     <p>Price: {item.currency} {item.price}</p>
-                    {item.is_topup && <p>Top-up Package: {item.topup_package ?? 'N/A'}</p>}
+                    {item.is_topup && <p>Top up Package: {item.topup_package ?? 'N/A'}</p>}
                   </div>
                   {item.is_topup && (
                     <div className="mt-3">
-                      <p className="text-xs text-muted-foreground">Top-up Data</p>
+                      <p className="text-xs text-muted-foreground">Top up Data</p>
                       {item.topup_data ? (
                         <div className="mt-1 space-y-1 text-xs sm:text-sm">
                           {Object.entries(item.topup_data).map(([key, value]) => (
@@ -164,7 +164,7 @@ export function OrderDetailsModal({ orderNumber, onClose }: OrderDetailsModalPro
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No top-up data</p>
+                        <p className="text-sm text-muted-foreground">No top up data</p>
                       )}
                     </div>
                   )}

@@ -16,8 +16,11 @@ import { ProductCodes } from '@/components/admin/products/ProductCodes';
 
 import { useCategoriesQuery } from '@/hooks/admin/useCategoriesQuery';
 import { useTagsQuery } from '@/hooks/admin/useTagsQuery';
-import { useCreateProductMutation } from '@/hooks/admin/useCreateProductMutation';
 import { useCreateTagMutation, useDeleteTagMutation } from '@/hooks/admin/useTagMutations';
+import { useCreateProductMutation } from '@/hooks/admin/useCreateProductMutation';
+import { useRegionsQuery } from '@/hooks/admin/useRegionsQuery';
+import { useTypesQuery } from '@/hooks/admin/useTypesQuery';
+import { usePlatformsQuery } from '@/hooks/admin/usePlatformsQuery';
 import type { ProductTag } from '@/types/catalog';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -37,7 +40,35 @@ export default function AdminProductCreatePage() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [isPopular, setIsPopular] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
-  const [region, setRegion] = useState('global');
+  const [region, setRegion] = useState('');
+  const [type, setType] = useState('');
+  const [platform, setPlatform] = useState('');
+  const [help, setHelp] = useState('');
+  const [priceBeforeOffer, setPriceBeforeOffer] = useState('');
+  const [offerValue, setOfferValue] = useState('');
+
+  useEffect(() => {
+    if (priceBeforeOffer) {
+      const basePrice = parseFloat(priceBeforeOffer);
+      if (!isNaN(basePrice)) {
+        if (offerValue) {
+          const discount = parseFloat(offerValue);
+          if (!isNaN(discount)) {
+            const finalPrice = basePrice - (basePrice * (discount / 100));
+            setPrice(finalPrice.toFixed(2));
+          } else {
+            setPrice(basePrice.toFixed(2));
+          }
+        } else {
+          setPrice(basePrice.toFixed(2));
+        }
+      } else {
+        setPrice('');
+      }
+    } else {
+      setPrice('');
+    }
+  }, [priceBeforeOffer, offerValue]);
 
   // Images
   const [images, setImages] = useState<ImageState[]>([]);
@@ -53,7 +84,6 @@ export default function AdminProductCreatePage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
 
-  // Submit state
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const clearError = (field: string) =>
@@ -65,12 +95,18 @@ export default function AdminProductCreatePage() {
 
   const categoriesQuery = useCategoriesQuery();
   const tagsQuery = useTagsQuery();
+  const regionsQuery = useRegionsQuery();
+  const typesQuery = useTypesQuery();
+  const platformsQuery = usePlatformsQuery();
   const createMutation = useCreateProductMutation();
   const createTagMutation = useCreateTagMutation();
   const deleteTagMutation = useDeleteTagMutation();
 
   const categories = categoriesQuery.data?.filter(c => !c.name.startsWith('Topup')) ?? [];
   const tags = tagsQuery.data ?? [];
+  const regions = regionsQuery.data ?? [];
+  const types = typesQuery.data ?? [];
+  const platforms = platformsQuery.data ?? [];
 
   // Unsaved changes warning
   useEffect(() => {
@@ -177,9 +213,8 @@ export default function AdminProductCreatePage() {
 
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Product name is required.';
-    // Update US1 regex price validation
-    if (!price || parseFloat(price) <= 0 || !/^\d+(\.\d{1,2})?$/.test(price))
-      newErrors.price = 'Price is required, must be > 0, and max 2 decimal places.';
+    if (!priceBeforeOffer || parseFloat(priceBeforeOffer) <= 0 || !/^\d+(\.\d{1,2})?$/.test(priceBeforeOffer))
+      newErrors.priceBeforeOffer = 'Price before offer is required, must be > 0, and max 2 decimal places.';
     if (!selectedCategory) newErrors.category = 'Category is required.';
     if (!stockMode) newErrors.stockMode = 'Stock mode is required.';
     if (stockMode === 'manual' && !manualFulfillmentTime)
@@ -201,12 +236,18 @@ export default function AdminProductCreatePage() {
     formData.append('name', name);
     formData.append('product_type', 'digital');
     formData.append('stock_mode', stockMode);
-    formData.append('region', region);
     if (price) formData.append('price', price);
     if (stockMode === 'manual' && manualFulfillmentTime)
       formData.append('manual_fulfillment_time', manualFulfillmentTime);
     if (shortDescription) formData.append('short_description', shortDescription);
     if (description) formData.append('description', description);
+    if (help) formData.append('help', help);
+    if (priceBeforeOffer) formData.append('price_before_offer', priceBeforeOffer);
+    if (offerValue) formData.append('offer_value', offerValue);
+    if (region) formData.append('region', region);
+    if (type) formData.append('type', type);
+    if (platform) formData.append('platform', platform);
+    
     formData.append('is_active', isActive ? 'true' : 'false');
     formData.append('is_available', isAvailable ? 'true' : 'false');
     formData.append('is_popular', isPopular ? 'true' : 'false');
@@ -287,9 +328,22 @@ export default function AdminProductCreatePage() {
           setIsFeatured={setIsFeatured}
           region={region}
           setRegion={setRegion}
+          type={type}
+          setType={setType}
+          platform={platform}
+          setPlatform={setPlatform}
+          help={help}
+          setHelp={setHelp}
+          priceBeforeOffer={priceBeforeOffer}
+          setPriceBeforeOffer={setPriceBeforeOffer}
+          offerValue={offerValue}
+          setOfferValue={setOfferValue}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           categories={categories}
+          regions={regions}
+          types={types}
+          platforms={platforms}
           errors={errors}
           clearError={clearError}
         />

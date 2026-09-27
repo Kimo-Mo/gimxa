@@ -6,10 +6,10 @@ import { AboutStats } from '@/components/features/about/AboutStats';
 
 export const metadata: Metadata = {
   title: 'About Us | Gimxa',
-  description: 'Learn more about Gimxa, your premier destination for digital games and top-ups.',
+  description: 'Learn more about Gimxa, your premier destination for digital games and top up.',
   openGraph: {
     title: 'About Us | Gimxa',
-    description: 'Learn more about Gimxa, your premier destination for digital games and top-ups.',
+    description: 'Learn more about Gimxa, your premier destination for digital games and top up.',
     url: 'https://gimxa.com/about',
     images: ['https://gimxa.com/images/og-about.jpg'],
   },

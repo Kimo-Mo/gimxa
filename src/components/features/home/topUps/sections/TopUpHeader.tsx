@@ -7,7 +7,7 @@ export const TopUpHeader = () => {
         Ready to play? Power up your game!
       </h1>
       <p className="text-muted-foreground text-lg md:text-xl font-medium max-w-2xl mx-auto">
-        Instant top-ups for your favorite titles — fast, easy, and secure.
+        Instant top up for your favorite titles — fast, easy, and secure.
       </p>
     </div>
   );

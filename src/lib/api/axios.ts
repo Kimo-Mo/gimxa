@@ -8,7 +8,7 @@ declare module 'axios' {
 }
 
 const isServer = typeof window === 'undefined';
-let baseURL = process.env.NEXT_PUBLIC_API_URL || '/api';
+let baseURL = process.env.NEXT_PUBLIC_API_URL || '/api'; // https://api.gimxa.com/api
 
 if (isServer && baseURL.startsWith('/')) {
   const backendUrlString = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -73,9 +73,10 @@ const ensureCSRFToken = async (): Promise<string | null> => {
     token = getCookie('csrftoken');
     if (token) {
       csrfFetchedAt = now;
-    } else {
-      console.error('CSRF token not found in cookie after fetch');
     }
+    // else {
+    //   console.error('CSRF token not found in cookie after fetch');
+    // }
   } catch (err) {
     console.error('Failed to fetch CSRF token:', err);
   } finally {
@@ -131,11 +132,26 @@ const requestMatchesAuthSubpath = (
 };
 
 const redirectToLogin = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('gimxa-auth-storage');
+  if (typeof window === 'undefined') return;
 
+  // Clear the client-readable parts of auth state immediately.
+  localStorage.removeItem('gimxa-auth-storage');
+
+  // The HttpOnly access/refresh cookies can only be cleared by the server.
+  // We use fetch directly (not axios) to avoid triggering the interceptor
+  // again and causing an infinite loop. The logout endpoint is AllowAny so
+  // it succeeds even with an expired or missing access token.
+  const csrfToken = getCookie('csrftoken') ?? '';
+  fetch('/api/auth/logout/', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+    },
+  }).finally(() => {
     window.location.href = '/?auth=login';
-  }
+  });
 };
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -153,7 +169,8 @@ api.interceptors.response.use(
       'data' in response.data &&
       'status' in response.data
     ) {
-      if (typeof response.data.data === 'number' && typeof response.data.status !== 'number') {
+      if (typeof response.data.data === 'number' && typeof response.data.status === 'object') {
+        // Backend accidentally flipped data and status for this endpoint
         response.data = response.data.status;
       } else {
         response.data = response.data.data;
@@ -176,12 +193,14 @@ api.interceptors.response.use(
 
     if (
       originalRequest.skipTokenRefresh === true ||
-      requestMatchesAuthSubpath(originalRequest, 'logout')
+      requestMatchesAuthSubpath(originalRequest, 'logout') ||
+      requestMatchesAuthSubpath(originalRequest, 'login') ||
+      requestMatchesAuthSubpath(originalRequest, 'register')
     ) {
       return Promise.reject(error);
     }
 
-    if (error.response.status === 401 || error.response.status === 403) {
+    if (error.response.status === 401) {
       // Do not gate refresh on localStorage: Zustand persist shape/timing can disagree with
       // in-memory auth (e.g. hydration), while HttpOnly cookies still hold a valid session.
       // Attempt refresh; if it fails, treat as logged out.
@@ -237,3 +256,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

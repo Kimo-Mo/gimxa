@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<url><loc>https://gimxa.com/dashboard/coupons</loc><lastmod>2026-05-03T03:56:20.832Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/notifications</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/orders</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/payments</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/products/create</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/products</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/topups/create</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/topups</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/dashboard/users</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/about</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/cart</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/checkout</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/legal</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/orders</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/payment-cancel</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/payment-success</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/profile</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/store</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/support</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/topups</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/auth/callback/google</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://gimxa.com/setNewPassword</loc><lastmod>2026-05-03T03:56:20.840Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+</urlset>

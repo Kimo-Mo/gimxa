@@ -19,7 +19,7 @@ export function OrderDetailItems({ items }: OrderDetailItemsProps) {
             <div>
               <div className="font-medium text-foreground">{item.product_name}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                Qty: {item.quantity} · {item.is_topup ? 'Top-Up' : 'Digital Code'}
+                Qty: {item.quantity} · {item.is_topup ? 'Top Up' : 'Digital Code'}
               </div>
               {item.topup_data && (
                 <div className="text-xs text-muted-foreground mt-1">

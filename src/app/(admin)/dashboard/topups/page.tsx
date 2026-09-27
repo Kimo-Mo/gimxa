@@ -64,7 +64,7 @@ export default function AdminTopupsPage() {
           <TopupTable
             topups={topups}
             loading={loading}
-            error={topupsQuery.isError ? 'Failed to load top-ups. Please try again.' : null}
+            error={topupsQuery.isError ? 'Failed to load top up. Please try again.' : null}
             setDeleteSlug={setDeleteSlug}
           />
 

@@ -268,6 +268,16 @@ export const useCartStore = create<CartState>()(
         }, 0);
       },
       syncWithServer: async () => {
+	// Guard: do not attempt an authenticated cart sync when logged out.
+        // Calling GET /cart/ unauthenticated triggers 401 → axios interceptor →
+        // refresh attempt → logout — even though the user never asked to log out.
+        // Lazy import avoids circular dependency: useAuthStore → useCartStore → useAuthStore.
+        const { useAuthStore } = await import('@/lib/stores/useAuthStore');
+        const { isAuthenticated } = useAuthStore.getState();
+        if (!isAuthenticated) {
+          return;
+        }
+
         set({ isLoading: true, status: 'sync', error: null });
         try {
           const response = await cartService.getCart();

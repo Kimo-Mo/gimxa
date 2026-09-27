@@ -25,10 +25,15 @@ export interface PackageForm {
   name: string;
   amount: string;
   price: string;
+  price_before_offer: string;
+  offer_value: string;
   is_active: boolean;
   is_popular: boolean;
   order: number;
   stock_mode: StockMode;
   manual_fulfillment_time: string;
   codes: string;
+  imageFile?: File | null;
+  imageUrl?: string | null;
 }
+

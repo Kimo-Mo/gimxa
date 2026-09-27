@@ -5,3 +5,4 @@ export * from './PopularGiftCards';
 export * from './PopularSubscriptions';
 export * from './ExploreByTags';
 export * from './TrustSignals';
+export * from './ExploreByPlatform';

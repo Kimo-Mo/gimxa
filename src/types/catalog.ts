@@ -24,11 +24,26 @@ export interface ProductCategory {
 // Must match Django's ProductType.choices exactly
 export type ProductType = 'game' | 'topup' | 'giftcard' | 'software' | 'console' | string;
 
+export interface BaseAttribute {
+  id: number;
+  name: string;
+  slug: string;
+  logo: string | null;
+  is_active: boolean;
+}
+
+export type Region = BaseAttribute;
+export type Platform = BaseAttribute;
+export type ProductTypeEntity = BaseAttribute;
+
 export interface Product {
   id: number;
   name: string;
   slug: string;
   price: number | null;
+  price_before_offer?: number | null;
+  offer_value?: number | null;
+  discount_percent?: number;
   product_type: ProductType;
   main_image: ProductImage | string | null;
   categories: ProductCategory[];
@@ -44,7 +59,10 @@ export interface Product {
   is_popular?: boolean;
   is_featured?: boolean;
   is_topup?: boolean;
-  region?: string;
+  region?: Region | null;
+  type?: ProductTypeEntity | null;
+  platform?: Platform | null;
+  help?: string | null;
   logo?: string | null;
   info?: string | null;
   currency?: string;
@@ -69,6 +87,8 @@ export interface CatalogSearchParams {
   product_types?: string | string[];
   is_available?: boolean;
   is_featured?: boolean;
+  platform?: string;
+  type?: string;
   is_topup?: boolean;
   filter?: string;
 }

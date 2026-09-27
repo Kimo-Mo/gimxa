@@ -1,4 +1,6 @@
-import { Plus, Trash2, Loader2, Save } from 'lucide-react';
+import { Plus, Trash2, Loader2, Save, X } from 'lucide-react';
+import Image from 'next/image';
+import { getImageUrl } from '@/lib/utils';
 import { PackageCodeSection } from './PackageCodeSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +45,7 @@ export function PackagesTab({
     <Card className="bg-card border-border shadow-sm">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-foreground text-base">Top-Up Packages</CardTitle>
+          <CardTitle className="text-foreground text-base">Top Up Packages</CardTitle>
           <Button
             type="button"
             variant="outline"
@@ -118,22 +120,86 @@ export function PackagesTab({
                     <p className="text-xs text-destructive">{pkgErrors[i].amount}</p>
                   )}
                 </div>
+                {/* Price Before Offer */}
                 <div className="space-y-1.5">
-                  <Label className="text-foreground text-xs">Price ($) *</Label>
+                  <Label className="text-foreground text-xs">Price Before ($) *</Label>
                   <input
                     type="number"
                     min={0}
-                    value={pkg.price}
+                    step="0.01"
+                    value={pkg.price_before_offer}
                     onChange={(e) => {
-                      updatePackage(i, 'price', e.target.value);
+                      const newPriceBefore = e.target.value;
+                      updatePackage(i, 'price_before_offer', newPriceBefore);
+                      
+                      // Auto-calculate Price After
+                      const basePrice = parseFloat(newPriceBefore);
+                      if (!isNaN(basePrice)) {
+                        const discount = parseFloat(pkg.offer_value || '0');
+                        const finalPrice = discount > 0 ? basePrice - (basePrice * (discount / 100)) : basePrice;
+                        updatePackage(i, 'price', finalPrice.toFixed(2));
+                      } else {
+                        updatePackage(i, 'price', '');
+                      }
+
                       setPkgErrors((prev) => {
                         const n = { ...prev };
-                        if (n[i]) delete n[i].price;
+                        if (n[i]) {
+                          delete n[i].price_before_offer;
+                          delete n[i].price; // also clear price error since it's auto-calculated now
+                        }
                         return n;
                       });
                     }}
+                    placeholder="e.g. 19.99"
+                    className={`flex h-8 w-full rounded-md border px-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring ${pkgErrors[i]?.price_before_offer ? 'border-destructive' : 'border-border'}`}
+                  />
+                  {pkgErrors[i]?.price_before_offer && (
+                    <p className="text-xs text-destructive">{pkgErrors[i].price_before_offer}</p>
+                  )}
+                </div>
+
+                {/* Offer Discount */}
+                <div className="space-y-1.5">
+                  <Label className="text-foreground text-xs">Offer Discount (%)</Label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    value={pkg.offer_value || ''}
+                    onChange={(e) => {
+                      const newOffer = e.target.value;
+                      updatePackage(i, 'offer_value', newOffer);
+                      
+                      // Auto-calculate Price After
+                      const basePrice = parseFloat(pkg.price_before_offer || '0');
+                      if (!isNaN(basePrice)) {
+                        const discount = parseFloat(newOffer);
+                        if (!isNaN(discount)) {
+                          const finalPrice = basePrice - (basePrice * (discount / 100));
+                          updatePackage(i, 'price', finalPrice.toFixed(2));
+                        } else {
+                          updatePackage(i, 'price', basePrice.toFixed(2));
+                        }
+                      }
+                    }}
+                    placeholder="e.g. 10"
+                    className="flex h-8 w-full rounded-md border px-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring border-border"
+                  />
+                </div>
+
+                {/* Price After Discount */}
+                <div className="space-y-1.5">
+                  <Label className="text-foreground text-xs">Price After Discount ($)</Label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={pkg.price}
+                    readOnly
+                    disabled
                     placeholder="0.00"
-                    className={`flex h-8 w-full rounded-md border px-3 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring ${pkgErrors[i]?.price ? 'border-destructive' : 'border-border'}`}
+                    className="flex h-8 w-full rounded-md border px-3 py-1 text-sm bg-muted text-foreground cursor-not-allowed opacity-70 border-border"
                   />
                   {pkgErrors[i]?.price && (
                     <p className="text-xs text-destructive">{pkgErrors[i].price}</p>
@@ -206,6 +272,38 @@ export function PackagesTab({
                     </p>
                   </div>
                 )}
+                <div className="space-y-1.5 sm:col-span-3">
+                  <Label className="text-foreground text-xs">Package Image</Label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      updatePackage(i, 'imageFile', file);
+                    }}
+                    className="flex h-8 w-full rounded-md border px-3 py-1 text-sm bg-background text-foreground border-border cursor-pointer file:border-0 file:bg-transparent file:text-sm file:font-medium"
+                  />
+                  {(pkg.imageFile || pkg.imageUrl) && (
+                    <div className="relative w-16 h-16 rounded-md overflow-hidden border border-border group mt-2">
+                      <Image
+                        src={pkg.imageFile ? URL.createObjectURL(pkg.imageFile) : getImageUrl(pkg.imageUrl!)}
+                        alt={pkg.name || 'package image'}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updatePackage(i, 'imageFile', null);
+                          updatePackage(i, 'imageUrl', null);
+                        }}
+                        className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white items-center justify-center hidden group-hover:flex">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap gap-4">
                 {(['is_active', 'is_popular'] as const).map((key) => (
@@ -248,3 +346,4 @@ export function PackagesTab({
     </Card>
   );
 }
+

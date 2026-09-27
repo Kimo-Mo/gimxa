@@ -32,7 +32,7 @@ export const ProductHeader = ({ product }: ProductHeaderProps) => {
         )}
         {product.region && (
           <Badge variant="outline" className="text-xs font-semibold px-3 py-1 uppercase">
-            {product.region}
+            {product.region.name}
           </Badge>
         )}
       </div>

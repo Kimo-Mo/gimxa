@@ -1,6 +1,6 @@
 'use client';
 
-import { useCartStore} from '@/lib/stores/useCartStore';
+import { useCartStore } from '@/lib/stores/useCartStore';
 import CartItemRow from '@/components/features/cart/CartItemRow';
 import CartSummary from '@/components/features/cart/CartSummary';
 import { ShoppingCart } from 'lucide-react';
@@ -19,7 +19,7 @@ export default function CartPage() {
       <div className="flex items-center justify-between border-b pb-6">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Shopping Cart</h1>
-          <p className="text-muted-foreground">Manage your gaming keys and top-ups.</p>
+          <p className="text-muted-foreground">Manage your gaming keys and top up.</p>
         </div>
         {validItems.length > 0 && (
           <Button variant="ghost" size="sm" onClick={clearCart} className="text-muted-foreground">

@@ -22,3 +22,4 @@ export * from './ThemeToggle';
 export * from './radio-group'
 export * from './carousel'
 export * from './popover';
+export * from './background-pattern';

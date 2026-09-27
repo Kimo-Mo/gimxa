@@ -9,8 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ProductCategory } from '@/types/catalog';
+import type { ProductCategory, Region, Platform, ProductTypeEntity } from '@/types/catalog';
 import type { StockMode } from './types';
+import dynamic from 'next/dynamic';
+import { AttributeCreateDialog } from './AttributeCreateDialog';
+import { AttributeEditDialog } from './AttributeEditDialog';
+import Image from 'next/image';
+import 'react-quill-new/dist/quill.snow.css';
+import { getImageUrl } from '@/lib/utils';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { 
+  ssr: false,
+  loading: () => <div className="h-[200px] w-full flex items-center justify-center border border-border rounded-md bg-muted/20">Loading Editor...</div>
+});
 
 interface ProductBasicInfoProps {
   name: string;
@@ -35,11 +46,25 @@ interface ProductBasicInfoProps {
   setIsFeatured: (v: boolean) => void;
   region: string;
   setRegion: (v: string) => void;
+  type: string;
+  setType: (v: string) => void;
+  platform: string;
+  setPlatform: (v: string) => void;
+  help: string;
+  setHelp: (v: string) => void;
+  priceBeforeOffer: string;
+  setPriceBeforeOffer: (v: string) => void;
+  offerValue: string;
+  setOfferValue: (v: string) => void;
   selectedCategory: string;
   setSelectedCategory: (v: string) => void;
   categories: ProductCategory[];
+  regions: Region[];
+  types: ProductTypeEntity[];
+  platforms: Platform[];
   errors: Record<string, string>;
   clearError: (field: string) => void;
+  isLoaded?: boolean;
 }
 
 export function ProductBasicInfo({
@@ -65,11 +90,25 @@ export function ProductBasicInfo({
   setIsFeatured,
   region,
   setRegion,
+  type,
+  setType,
+  platform,
+  setPlatform,
+  help,
+  setHelp,
+  priceBeforeOffer,
+  setPriceBeforeOffer,
+  offerValue,
+  setOfferValue,
   selectedCategory,
   setSelectedCategory,
   categories,
+  regions,
+  types,
+  platforms,
   errors,
   clearError,
+  isLoaded = true,
 }: ProductBasicInfoProps) {
   return (
     <Card className="bg-card border-border shadow-sm">
@@ -93,6 +132,25 @@ export function ProductBasicInfo({
               className={`bg-background ${errors.name ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}
             />
             {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="price-before-offer" className="text-foreground text-sm">
+              Price Before Offer ($) *
+            </Label>
+            <Input
+              id="price-before-offer"
+              type="number"
+              step="0.01"
+              min={0}
+              value={priceBeforeOffer}
+              onChange={(e) => {
+                setPriceBeforeOffer(e.target.value);
+                clearError('priceBeforeOffer');
+              }}
+              placeholder="e.g. 19.99"
+              className={`bg-background ${errors.priceBeforeOffer ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}
+            />
+            {errors.priceBeforeOffer && <p className="text-xs text-destructive mt-0.5">{errors.priceBeforeOffer}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="product-category" className="text-foreground text-sm">
@@ -123,7 +181,7 @@ export function ProductBasicInfo({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="product-price" className="text-foreground text-sm">
-              Price ($) *
+              Price After Discount ($)
             </Label>
             <Input
               id="product-price"
@@ -136,9 +194,28 @@ export function ProductBasicInfo({
                 clearError('price');
               }}
               placeholder="0.00"
-              className={`bg-background ${errors.price ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}
+              disabled
+              className="bg-muted border-border cursor-not-allowed opacity-70"
             />
-            {errors.price && <p className="text-xs text-destructive mt-0.5">{errors.price}</p>}
+          </div>
+
+
+
+          <div className="space-y-1.5">
+            <Label htmlFor="offer-value" className="text-foreground text-sm">
+              Offer Discount (%)
+            </Label>
+            <Input
+              id="offer-value"
+              type="number"
+              step="0.01"
+              min={0}
+              max={100}
+              value={offerValue}
+              onChange={(e) => setOfferValue(e.target.value)}
+              placeholder="e.g. 10"
+              className="bg-background border-border"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="stock-mode" className="text-foreground text-sm">
@@ -166,21 +243,83 @@ export function ProductBasicInfo({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="product-region" className="text-foreground text-sm">
-              Region *
+              Region
             </Label>
-            <Select value={region} onValueChange={setRegion}>
-              <SelectTrigger id="product-region" className="bg-background border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="global">Global</SelectItem>
-                <SelectItem value="eu">Europe (EU)</SelectItem>
-                <SelectItem value="us">United States (US)</SelectItem>
-                <SelectItem value="mena">Middle East &amp; Africa (MENA)</SelectItem>
-                <SelectItem value="latam">Latin America (LATAM)</SelectItem>
-                <SelectItem value="asia">Asia</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger id="product-region" className="bg-background border-border flex-1">
+                  <SelectValue placeholder="Select region" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {regions?.map((r) => (
+                    <SelectItem key={r.id} value={r.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {r.logo && <img src={getImageUrl(r.logo)} alt="" className="w-5 h-5 object-contain" />}
+                        <span>{r.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {region && regions?.find(r => r.id.toString() === region) && (
+                <AttributeEditDialog type="regions" item={regions.find(r => r.id.toString() === region)!} onSuccess={setRegion} />
+              )}
+              <AttributeCreateDialog type="regions" onSuccess={setRegion} />
+            </div>
+          </div>
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="product-type" className="text-foreground text-sm">
+              Type (Key/Account)
+            </Label>
+            <div className="flex gap-2">
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger id="product-type" className="bg-background border-border flex-1">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {types?.map((t) => (
+                    <SelectItem key={t.id} value={t.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {t.logo && <img src={getImageUrl(t.logo)} alt="" className="w-5 h-5 object-contain" />}
+                        <span>{t.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {type && types?.find(t => t.id.toString() === type) && (
+                <AttributeEditDialog type="types" item={types.find(t => t.id.toString() === type)!} onSuccess={setType} />
+              )}
+              <AttributeCreateDialog type="types" onSuccess={setType} />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="product-platform" className="text-foreground text-sm">
+              Platform
+            </Label>
+            <div className="flex gap-2">
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger id="product-platform" className="bg-background border-border flex-1">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {platforms?.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        {p.logo && <img src={getImageUrl(p.logo)} alt="" className="w-5 h-5 object-contain" />}
+                        <span>{p.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {platform && platforms?.find(p => p.id.toString() === platform) && (
+                <AttributeEditDialog type="platforms" item={platforms.find(p => p.id.toString() === platform)!} onSuccess={setPlatform} />
+              )}
+              <AttributeCreateDialog type="platforms" onSuccess={setPlatform} />
+            </div>
           </div>
           {stockMode === 'manual' && (
             <div className="space-y-1.5">
@@ -218,18 +357,37 @@ export function ProductBasicInfo({
             maxLength={500}
           />
         </div>
+        
         <div className="space-y-1.5">
+          <Label htmlFor="help-text" className="text-foreground text-sm">
+            Help Note (Warning for users)
+          </Label>
+          <Textarea
+            id="help-text"
+            value={help}
+            onChange={(e) => setHelp(e.target.value)}
+            placeholder="e.g. This key can only be activated in Egypt."
+            className="bg-background border-border min-h-[80px]"
+          />
+        </div>
+        <div className="space-y-1.5 pb-8">
           <Label htmlFor="description" className="text-foreground text-sm">
             Description
           </Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Full product description…"
-            rows={5}
-            className="bg-background border-border resize-none"
-          />
+          <div className="bg-background [&_.ql-container]:min-h-[200px] [&_.ql-container]:text-base [&_.ql-editor]:min-h-[200px]">
+            {isLoaded ? (
+              <ReactQuill
+                theme="snow"
+                value={description}
+                onChange={setDescription}
+                placeholder="Full product description…"
+              />
+            ) : (
+              <div className="h-[200px] w-full flex items-center justify-center border border-border rounded-md bg-muted/20 text-muted-foreground text-sm">
+                Loading editor…
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-6">
           {[
@@ -272,3 +430,4 @@ export function ProductBasicInfo({
     </Card>
   );
 }
+

@@ -143,9 +143,12 @@ export function proxy(request: NextRequest) {
     const allowedRoles = ['admin', 'developer'];
 
     if (!role || !allowedRoles.includes(role)) {
+      // The user IS authenticated (tokens exist) but lacks admin rights.
+      // Redirect to home — do NOT add ?auth=login (that opens a login modal
+      // for someone who is already logged in).
       const url = request.nextUrl.clone();
       url.pathname = '/';
-      url.searchParams.set('auth', 'login');
+      url.searchParams.delete('auth');
       return NextResponse.redirect(url);
     }
   }
@@ -162,3 +165,4 @@ export const config = {
    */
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
+
